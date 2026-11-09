@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Bias Codex — Códice interactivo de sesgos cognitivos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-ink-black:#1a1a1a; --color-charcoal:#262626; --color-graphite:#666666;
+  --color-ash:#999999; --color-fog:#e6e6e6; --color-mist:#f2f2f2;
+  --color-paper:#ffffff; --color-pure-black:#000000;
+  /* único acento del sistema: marca SOLO el foco activo */
+  --color-focus:#e8412a;
+  --font-riformallweb:'Inter Tight','RiformaLLWeb',ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --text-caption:12px; --text-body-sm:16px; --text-body:18px;
+  --text-subheading:24px; --text-heading:40px; --text-display:64px;
+  --spacing-8:8px; --spacing-16:16px; --spacing-24:24px; --spacing-32:32px; --spacing-64:64px;
+  --page-max-width:1200px;
+  --radius-buttons:8px; --radius-images:12px; --radius-nav:16px;
+  --q0:#1a1a1a; --q1:#262626; --q2:#666666; --q3:#999999;
+  /* curvas de navegación */
+  --ease-std:cubic-bezier(.4,0,.25,1);
+  --ease-out-expo:cubic-bezier(.22,.85,.3,1);       /* entradas sin latigazo */
+  --ease-in-out-quint:cubic-bezier(.45,.05,.25,1);  /* cámara, simétrica y blanda */
+  --ease-in-quart:cubic-bezier(.35,0,.45,1);        /* salidas sin corte seco */
+  --ease-spring:cubic-bezier(.34,1.35,.64,1);       /* rebote contenido */
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0; background:var(--color-paper); color:var(--color-ink-black);
+  font-family:var(--font-riformallweb); font-weight:400;
+  font-size:var(--text-body); line-height:1.25; letter-spacing:-0.01em;
+  font-feature-settings:"liga" 0;
+}
+body.locked{overflow:hidden;}
+h1,h2,h3,p,ul,li,figure{margin:0;padding:0;}
+ul{list-style:none;}
+button{font:inherit;letter-spacing:-0.01em;color:inherit;cursor:pointer;}
+input{font:inherit;letter-spacing:-0.01em;color:inherit;}
+a{color:inherit;}
+.wrap{max-width:var(--page-max-width);margin:0 auto;padding:0 var(--spacing-32);}
+
+/* ---------- nav ---------- */
+.nav{position:sticky;top:0;z-index:40;background:var(--color-paper);}
+.nav-in{max-width:var(--page-max-width);margin:0 auto;padding:var(--spacing-16) var(--spacing-32);
+  display:flex;align-items:center;justify-content:space-between;gap:var(--spacing-16);}
+.wordmark{font-size:var(--text-body);color:var(--color-ink-black);
+  background:none;border:0;padding:0;cursor:pointer;letter-spacing:-0.01em;}
+.wordmark:hover{text-decoration:underline;text-underline-offset:3px;}
+.menu-btn{width:40px;height:40px;background:var(--color-paper);border:1px solid var(--color-ink-black);
+  border-radius:var(--radius-nav);display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:4px;padding:0;flex:none;}
+.menu-btn span{display:block;width:16px;height:1px;background:var(--color-ink-black);}
+.menu{display:none;border-top:1px solid var(--color-fog);background:var(--color-paper);}
+.menu.open{display:block;}
+.menu-in{max-width:var(--page-max-width);margin:0 auto;padding:var(--spacing-16) var(--spacing-32);
+  display:flex;flex-wrap:wrap;gap:var(--spacing-24);}
+.menu-in a{font-size:var(--text-body-sm);color:var(--color-graphite);text-decoration:none;}
+.menu-in a:hover{color:var(--color-ink-black);text-decoration:underline;}
+
+/* ---------- prólogo: secuencia temporizada, no scroll ---------- */
+#prologue{position:fixed;inset:0;z-index:90;background:var(--color-paper);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;}
+#prologue.done{display:none;}
+.pro-stage{position:relative;width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;}
+.pro-count{position:absolute;top:var(--spacing-32);left:var(--spacing-32);
+  font-size:var(--text-caption);color:var(--color-ash);
+  opacity:0;transition:opacity .6s var(--ease-std);}
+.pro-acts{position:absolute;top:var(--spacing-32);right:var(--spacing-32);z-index:3;
+  display:flex;gap:var(--spacing-8);opacity:0;pointer-events:none;
+  transition:opacity .6s var(--ease-std);}
+.skip{border:1px solid var(--color-fog);background:var(--color-paper);
+  border-radius:var(--radius-buttons);padding:8px var(--spacing-16);
+  font-size:var(--text-caption);color:var(--color-graphite);}
+.skip:hover{border-color:var(--color-ink-black);color:var(--color-ink-black);}
+.skip.on{background:var(--color-charcoal);border-color:var(--color-charcoal);
+  color:var(--color-paper);}
+#sndBtn.off{color:var(--color-ash);}
+
+/* portada */
+.pro-start{position:absolute;text-align:center;max-width:720px;
+  padding:0 var(--spacing-32);opacity:0;pointer-events:none;
+  transition:opacity .6s var(--ease-out-expo);}
+.pro-start{display:flex;flex-direction:column;align-items:center;}
+.pro-start h1{font-size:var(--text-display);line-height:1;letter-spacing:-0.02em;
+  font-weight:900;margin-bottom:var(--spacing-32);text-align:center;}
+.btn.start{padding:var(--spacing-16) var(--spacing-64);font-size:var(--text-body);}
+.sndlink{background:none;border:0;padding:0;margin-top:var(--spacing-16);
+  font-size:var(--text-caption);color:var(--color-ash);text-decoration:underline;
+  text-underline-offset:3px;}
+.sndlink:hover{color:var(--color-ink-black);}
+
+.pro-lines{position:absolute;left:0;right:0;padding:0 var(--spacing-32);
+  display:flex;align-items:center;justify-content:center;}
+.pl{position:absolute;left:var(--spacing-32);right:var(--spacing-32);
+  font-size:var(--text-heading);line-height:1.1;text-align:center;
+  pointer-events:none;opacity:0;
+  /* solo opacity y transform: son las dos que el compositor puede animar sin
+     recalcular maquetación. Animar letter-spacing por fotograma era el tirón. */
+  transform:translate3d(0,20px,0) scale(1.03);
+  transition:opacity .9s var(--ease-in-quart), transform .9s var(--ease-in-quart);
+  will-change:opacity,transform;}
+.pl.in{opacity:1;transform:translate3d(0,0,0) scale(1);
+  transition:opacity 1s var(--ease-out-expo), transform 1.2s var(--ease-out-expo);}
+.pl.out{opacity:0;transform:translate3d(0,-18px,0) scale(.988);
+  transition:opacity .9s var(--ease-in-quart), transform .9s var(--ease-in-quart);}
+
+.pro-guide{position:absolute;inset:0;z-index:2;opacity:0;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:var(--spacing-32);padding:var(--spacing-64) var(--spacing-32);
+  background:var(--color-paper);transition:opacity .7s var(--ease-out-expo);}
+.guide-head{text-align:center;}
+.guide-head h2{font-size:var(--text-heading);line-height:1.1;letter-spacing:-0.4px;
+  font-weight:400;margin-top:var(--spacing-8);}
+.guide-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:var(--spacing-32);max-width:960px;width:100%;}
+.gi{display:flex;gap:var(--spacing-16);align-items:flex-start;}
+.gi .badge.sm{width:32px;height:32px;font-size:var(--text-caption);}
+.gi strong{display:block;font-weight:400;font-size:var(--text-body);color:var(--color-ink-black);}
+.gi span{display:block;margin-top:4px;font-size:var(--text-body-sm);color:var(--color-graphite);}
+.guide-keys{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:var(--spacing-8) var(--spacing-32);max-width:960px;width:100%;
+  padding-top:var(--spacing-24);border-top:1px solid var(--color-fog);
+  font-size:var(--text-body-sm);color:var(--color-graphite);}
+.guide-keys em{font-style:normal;color:var(--color-ink-black);}
+.btn.enter{padding:var(--spacing-16) var(--spacing-32);font-size:var(--text-body);}
+.guide-foot{font-size:var(--text-caption);color:var(--color-ash);text-align:center;}
+.guide-foot .drain{display:block;width:200px;height:1px;margin:var(--spacing-8) auto 0;
+  background:var(--color-fog);}
+.guide-foot .drain span{display:block;height:1px;width:0;background:var(--color-ink-black);}
+
+.pro-rail{position:absolute;left:var(--spacing-32);right:var(--spacing-32);
+  bottom:var(--spacing-32);height:1px;background:var(--color-fog);
+  opacity:0;transition:opacity .6s var(--ease-std);}
+.pro-rail span{display:block;height:1px;width:0;background:var(--color-ink-black);}
+
+/* estados */
+#prologue.state-start .pro-start{opacity:1;pointer-events:auto;}
+#prologue.state-play .pro-count,#prologue.state-play .pro-rail,
+#prologue.state-play .pro-acts,#prologue.state-guide .pro-acts{opacity:1;}
+#prologue.state-play .pro-acts,#prologue.state-guide .pro-acts{pointer-events:auto;}
+#prologue.state-guide .pro-guide{opacity:1;pointer-events:auto;}
+
+body.intro{overflow:hidden;}
+body.intro .nav{opacity:0;pointer-events:none;}
+.nav{transition:opacity .6s var(--ease-std);}
+/* ojo: nunca opacity/transform sobre #ch1 — contiene elementos position:fixed
+   (pantalla completa y panel) y los anclaría a él en vez de al viewport */
+#ch1 .chead,#ch1 > .csub{opacity:0;transform:translateY(18px);
+  transition:opacity .8s var(--ease-out-expo),transform .8s var(--ease-out-expo);}
+#ch1 > .csub{transition-delay:.08s;}
+#ch1.revealed .chead,#ch1.revealed > .csub{opacity:1;transform:none;}
+
+/* ---------- chapters ---------- */
+.chapter{margin-top:var(--spacing-64);padding-top:var(--spacing-64);scroll-margin-top:80px;}
+.chead{display:flex;align-items:center;gap:var(--spacing-16);}
+.badge{width:32px;height:32px;flex:none;border-radius:50%;background:var(--color-pure-black);
+  color:var(--color-paper);font-size:var(--text-body);display:flex;align-items:center;
+  justify-content:center;}
+.badge.sm{width:24px;height:24px;font-size:var(--text-caption);}
+.badge.focus{background:var(--color-focus);}
+.chead h2{font-size:var(--text-heading);line-height:1.1;letter-spacing:-0.4px;font-weight:400;}
+.csub{margin-top:var(--spacing-24);font-size:var(--text-body);color:var(--color-graphite);max-width:640px;}
+.kicker{font-size:var(--text-caption);color:var(--color-ash);}
+
+/* ---------- controls ---------- */
+.controls{margin-top:var(--spacing-32);display:flex;flex-wrap:wrap;gap:var(--spacing-8);align-items:center;}
+.controls + .controls{margin-top:var(--spacing-8);}
+.search{flex:1 1 260px;min-width:220px;}
+.search input{width:100%;background:transparent;border:1px solid var(--color-fog);
+  border-radius:var(--radius-buttons);padding:12px var(--spacing-16);font-size:var(--text-body-sm);
+  color:var(--color-ink-black);outline:none;}
+.search input:focus{border-color:var(--color-ink-black);}
+.search input::placeholder{color:var(--color-ash);}
+.btn{background:transparent;border:1px solid var(--color-fog);color:var(--color-ink-black);
+  border-radius:var(--radius-buttons);padding:12px var(--spacing-16);font-size:var(--text-body-sm);
+  display:inline-flex;align-items:center;gap:var(--spacing-8);white-space:nowrap;}
+.btn{transition:background-color .22s var(--ease-std),border-color .22s var(--ease-std),
+  color .22s var(--ease-std),transform .22s var(--ease-spring);}
+.btn:hover{border-color:var(--color-ink-black);}
+.btn:active{transform:scale(.97);}
+.btn.dark,.btn.on{background:var(--color-charcoal);border-color:var(--color-charcoal);color:var(--color-paper);}
+.btn .num{width:20px;height:20px;border-radius:50%;background:var(--color-pure-black);
+  color:var(--color-paper);font-size:var(--text-caption);display:flex;align-items:center;
+  justify-content:center;flex:none;}
+.btn.on .num{background:var(--color-paper);color:var(--color-charcoal);}
+.dot{width:8px;height:8px;border-radius:50%;flex:none;background:currentColor;}
+.btn.on .dot{background:var(--color-paper);}
+.chips{display:flex;flex-wrap:wrap;gap:var(--spacing-8);}
+
+/* ---------- status bar ---------- */
+.status{margin-top:var(--spacing-24);padding:var(--spacing-16) 0;
+  border-top:1px solid var(--color-ink-black);border-bottom:1px solid var(--color-fog);
+  display:flex;align-items:center;gap:var(--spacing-16);flex-wrap:wrap;}
+.status .lead{display:flex;align-items:center;gap:var(--spacing-16);min-width:0;flex:1 1 300px;}
+.status .eye{font-size:var(--text-caption);color:var(--color-ash);}
+.status .main{font-size:var(--text-subheading);line-height:1.15;letter-spacing:-0.24px;
+  color:var(--color-ink-black);}
+.status .tally{font-size:var(--text-body-sm);color:var(--color-graphite);white-space:nowrap;}
+.status .clear{border:1px solid var(--color-fog);background:transparent;border-radius:var(--radius-buttons);
+  padding:8px var(--spacing-16);font-size:var(--text-caption);color:var(--color-graphite);}
+.status .clear:hover{border-color:var(--color-ink-black);color:var(--color-ink-black);}
+.status .clear[hidden]{display:none;}
+.zoombar{display:flex;gap:var(--spacing-8);align-items:center;}
+.zoombar button{height:40px;min-width:40px;border:1px solid var(--color-fog);background:var(--color-paper);
+  border-radius:var(--radius-nav);font-size:var(--text-body);line-height:1;padding:0 var(--spacing-8);
+  display:flex;align-items:center;justify-content:center;color:var(--color-ink-black);}
+.zoombar button:hover{border-color:var(--color-ink-black);}
+.zoombar button.wide{font-size:var(--text-caption);padding:0 var(--spacing-16);}
+.zoombar .fs{height:48px;padding:0 var(--spacing-24);font-size:var(--text-body-sm);
+  background:var(--color-charcoal);border-color:var(--color-charcoal);color:var(--color-paper);
+  margin-left:var(--spacing-8);}
+.zoombar .fs:hover{background:var(--color-pure-black);border-color:var(--color-pure-black);}
+#codexWrap.on .zoombar .fs{height:40px;font-size:var(--text-caption);
+  padding:0 var(--spacing-16);background:transparent;color:var(--color-ink-black);
+  border-color:var(--color-fog);}
+#codexWrap.on .zoombar .fs:hover{background:transparent;border-color:var(--color-ink-black);}
+.zoombar .lvl{font-size:var(--text-caption);color:var(--color-ash);width:44px;text-align:center;}
+
+/* ---------- codex ---------- */
+.codex{margin-top:var(--spacing-24);
+  width:min(1760px, calc(100vw - 48px));
+  margin-left:calc(50% - min(880px, calc(50vw - 24px)));}
+.codex-stage{position:relative;}
+.codex svg{display:block;width:100%;height:auto;touch-action:pan-y;}
+.codex svg.pan{cursor:grab;}
+.codex svg.panning{cursor:grabbing;}
+#cam{transform-box:view-box;transform-origin:0 0;
+  transition:transform var(--cam-ms,680ms) var(--ease-in-out-quint);}
+#cam.nt{transition:none;}
+
+#codexWrap.on{position:fixed;inset:0;z-index:70;background:var(--color-paper);
+  padding:var(--spacing-16) var(--spacing-32) var(--spacing-24);overflow:auto;
+  display:flex;flex-direction:column;}
+#codexWrap.on .status{margin-top:0;}
+#codexWrap.on .codex{width:100%;margin-left:0;margin-top:var(--spacing-8);
+  flex:1;display:flex;align-items:center;justify-content:center;}
+#codexWrap.on .codex-stage{width:min(100%, calc((100vh - 248px) * 1.281));}
+#codexWrap.on .listhint{display:none!important;}
+/* en pantalla completa el menú se compacta en una franja que envuelve;
+   nunca se desplaza en horizontal */
+#codexWrap.on .menu-deck{margin-top:var(--spacing-8);padding-top:0;}
+#codexWrap.on .menu-deck .controls,#codexWrap.on .menu-deck .controls:first-child{
+  margin-top:0;justify-content:center;}
+#codexWrap.on .search{flex:0 1 260px;min-width:180px;}
+#codexWrap.on .chips.strat{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;}
+#codexWrap.on .chips.strat .btn{flex:none;}
+.menu-deck{margin-top:var(--spacing-24);padding-top:var(--spacing-8);}
+.keyhint{margin-top:var(--spacing-16);font-size:var(--text-caption);
+  color:var(--color-ash);text-align:center;}
+.keyhint em{font-style:normal;color:var(--color-graphite);}
+.menu-deck .controls:first-child{margin-top:var(--spacing-16);}
+
+.center{position:absolute;left:50%;top:53.2%;transform:translate(-50%,-50%);
+  width:19%;text-align:center;pointer-events:none;transition:opacity .3s;}
+.center .k{font-size:var(--text-subheading);line-height:1.15;letter-spacing:-0.24px;color:var(--color-ink-black);}
+.center .k.sm{font-size:var(--text-body-sm);line-height:1.25;letter-spacing:-0.16px;}
+.center .v{margin-top:var(--spacing-8);font-size:var(--text-caption);line-height:1.2;color:var(--color-graphite);}
+.codex-stage.zoomed .center{opacity:0;}
+
+g.bias,g.clabel,path.limb,.qlabel{transition:opacity .4s var(--ease-std);}
+g.bias text,g.bias circle,g.clabel text,g.clabel circle,.qlabel text,path.limb,g.bias path{
+  transition:opacity .4s var(--ease-std),fill .4s var(--ease-std),stroke .4s var(--ease-std),
+  stroke-width .25s var(--ease-std),r .2s var(--ease-spring);}
+g.cl.focus .pip{transform-box:fill-box;transform-origin:center;
+  animation:pipPop .6s var(--ease-spring);}
+g.bias{cursor:pointer;}
+g.bias circle{stroke:none;transition:r .15s,fill .15s;}
+g.bias text{font-size:12px;letter-spacing:-0.12px;}
+g.bias path,path.limb{fill:none;stroke-width:1;transition:stroke .15s,stroke-width .15s;}
+svg.hot g.bias:not(.is-hot){opacity:.2;}
+svg.hot path.limb{opacity:.2;}
+svg.hot path.limb.is-hot{opacity:1;}
+svg.hot g.clabel:not(.is-hot){opacity:.2;}
+g.bias.off{opacity:.1;pointer-events:none;}
+g.bias.off text{fill:var(--color-fog)!important;}
+
+/* foco activo — el único momento con color en todo el sistema */
+g.cl.focus path.limb,g.cl.focus g.bias path{stroke:var(--color-focus)!important;}
+g.cl.focus g.bias circle,g.cl.focus .pip{fill:var(--color-focus)!important;}
+g.cl.focus g.bias text,g.cl.focus text.nm{fill:var(--color-focus)!important;}
+g.cl.focus text.ct{fill:var(--color-focus)!important;opacity:.7;}
+
+g.bias.is-hot circle{r:6;fill:var(--color-focus)!important;}
+g.bias.is-hot text{fill:var(--color-focus)!important;text-decoration:underline;}
+g.bias.is-hot path,path.limb.is-hot{stroke:var(--color-focus)!important;stroke-width:2;}
+
+g.clabel{cursor:pointer;}
+g.clabel text.nm{font-size:14px;letter-spacing:-0.14px;fill:var(--color-ink-black);}
+g.clabel text.ct{font-size:12px;letter-spacing:-0.12px;fill:var(--color-ash);}
+g.clabel .pip{fill:var(--color-pure-black);}
+g.clabel .pipn{font-size:12px;fill:var(--color-paper);}
+g.clabel:hover text.nm{text-decoration:underline;}
+g.clabel.off{opacity:.15;}
+g.clabel.pick text.nm{text-decoration:underline;}
+g.qlabel{cursor:pointer;}
+g.qlabel .hit{fill:transparent;}
+g.qlabel text.qt{font-size:40px;letter-spacing:-0.4px;}
+g.qlabel text.qcap{font-size:14px;letter-spacing:-0.14px;fill:var(--color-ash);}
+g.qlabel .rule{stroke:var(--color-fog);stroke-width:1;
+  transition:stroke .25s var(--ease-std);}
+g.qlabel:hover .rule{stroke:var(--color-ink-black);}
+g.qlabel:hover text.qt{text-decoration:underline;}
+g.qlabel:hover text.qcap{fill:var(--color-ink-black);}
+g.qlabel.off{opacity:.15;}
+g.qlabel.focus text.qt{fill:var(--color-focus)!important;}
+g.qlabel.focus .rule{stroke:var(--color-focus);}
+g.qlabel.focus text.qcap{fill:var(--color-focus);opacity:.75;}
+.ring{fill:none;stroke:var(--color-fog);stroke-width:1;}
+
+/* despliegue: los radios se dibujan hacia afuera en cascada, como pétalos.
+   Cada elemento lleva su propio --d (retardo) y --len (largo del trazo);
+   el navegador hace todo el trabajo, no hay bucle en JS. */
+@keyframes drawLine{from{stroke-dashoffset:var(--len);}to{stroke-dashoffset:0;}}
+@keyframes bloomIn{from{opacity:0;}to{opacity:1;}}
+@keyframes ringDraw{from{stroke-dashoffset:3959;}to{stroke-dashoffset:0;}}
+#cam.bloom .ring{stroke-dasharray:3959;
+  animation:ringDraw 1.2s var(--ease-out-expo) backwards;}
+#cam.bloom path.limb{stroke-dasharray:var(--len);
+  animation:drawLine .72s var(--ease-out-expo) backwards;animation-delay:var(--d);}
+#cam.bloom g.bias path{stroke-dasharray:var(--len);
+  animation:drawLine .5s var(--ease-out-expo) backwards;animation-delay:var(--d);}
+#cam.bloom g.bias circle,#cam.bloom g.bias text{
+  animation:bloomIn .42s var(--ease-std) backwards;
+  animation-delay:calc(var(--d) + 250ms);}
+#cam.bloom g.clabel{animation:bloomIn .55s var(--ease-std) backwards;
+  animation-delay:var(--d);}
+#cam.bloom .qlabel{animation:bloomIn .8s var(--ease-std) backwards;
+  animation-delay:var(--d);}
+
+.navbar{display:flex;gap:var(--spacing-8);}
+.clear.muted{opacity:.45;}
+
+@keyframes rowIn{from{opacity:0;transform:translateY(9px);}to{opacity:1;transform:none;}}
+@keyframes chipIn{from{opacity:0;transform:translateY(7px) scale(.96);}to{opacity:1;transform:none;}}
+@keyframes popIn{0%{transform:scale(.55);opacity:0;}62%{transform:scale(1.14);opacity:1;}100%{transform:scale(1);}}
+@keyframes pipPop{0%{transform:scale(1);}45%{transform:scale(1.38);}100%{transform:scale(1);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+
+#chapters.animate .row{animation:rowIn .5s var(--ease-out-expo) backwards;
+  animation-delay:calc(var(--i,0) * 14ms);}
+.chips.strat .btn{animation:chipIn .42s var(--ease-spring) backwards;
+  animation-delay:calc(var(--i,0) * 38ms);}
+.badge.pop{animation:popIn .5s var(--ease-spring);}
+.status .main,.status .eye{transition:opacity .3s var(--ease-std);}
+.status.swap .main,.status.swap .eye{opacity:0;}
+.listhint{animation:fadeUp .5s var(--ease-out-expo) backwards;}
+
+body.noanim .pl{transition:none!important;}
+body.noanim #ch1 .chead,body.noanim #ch1 > .csub{opacity:1;transform:none;}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important;}
+}
+
+/* ---------- lists ---------- */
+.listhint{margin-top:var(--spacing-24);padding-top:var(--spacing-16);
+  border-top:1px solid var(--color-fog);font-size:var(--text-body-sm);color:var(--color-graphite);
+  display:flex;flex-wrap:wrap;gap:var(--spacing-16);align-items:center;}
+.listhint button{background:transparent;border:1px solid var(--color-fog);
+  border-radius:var(--radius-buttons);padding:8px var(--spacing-16);
+  font-size:var(--text-caption);color:var(--color-ink-black);}
+.listhint button:hover{border-color:var(--color-ink-black);}
+.cluster-block{margin-top:var(--spacing-32);}
+.cluster-head{display:flex;align-items:center;gap:var(--spacing-16);padding-bottom:var(--spacing-8);
+  cursor:pointer;}
+.cluster-head h3{font-size:var(--text-subheading);line-height:1.15;letter-spacing:-0.24px;
+  font-weight:400;max-width:720px;}
+.cluster-head .n{font-size:var(--text-caption);color:var(--color-ash);flex:none;margin-left:auto;}
+.row{display:grid;grid-template-columns:280px 1fr;gap:var(--spacing-16);
+  padding:var(--spacing-8) var(--spacing-16);width:100%;text-align:left;border:0;
+  background:transparent;align-items:baseline;}
+.row:nth-child(odd){background:var(--color-mist);}
+.row:hover .rn,.row.sel .rn{text-decoration:underline;}
+.rn{font-size:var(--text-body-sm);color:var(--color-ink-black);}
+.re{display:block;font-size:var(--text-caption);color:var(--color-ash);text-decoration:none;}
+.rd{font-size:var(--text-body-sm);color:var(--color-graphite);}
+
+/* ---------- panel ---------- */
+.panel{position:fixed;top:0;right:0;height:100%;width:420px;max-width:92vw;
+  background:var(--color-paper);border-left:1px solid var(--color-fog);
+  padding:var(--spacing-32);overflow-y:auto;z-index:80;
+  display:flex;flex-direction:column;
+  transform:translateX(102%);transition:transform .5s var(--ease-in-quart);}
+.panel.open{transform:none;transition:transform .62s var(--ease-out-expo);}
+.panel .close{position:absolute;top:var(--spacing-16);right:var(--spacing-16);
+  width:40px;height:40px;border:1px solid var(--color-fog);border-radius:var(--radius-nav);
+  background:var(--color-paper);display:flex;align-items:center;justify-content:center;
+  font-size:var(--text-body-sm);line-height:1;padding:0;}
+.panel .close:hover{border-color:var(--color-ink-black);}
+#panelBody{margin:auto 0;width:100%;}   /* centrado vertical cuando sobra alto */
+.panel .eyebrow{font-size:var(--text-caption);color:var(--color-ash);}
+.panel h3{margin-top:4px;font-size:var(--text-subheading);line-height:1.15;
+  letter-spacing:-0.24px;font-weight:400;}
+.panel .estitle{margin-top:2px;font-size:var(--text-body-sm);color:var(--color-graphite);}
+.panel .def{margin-top:var(--spacing-16);font-size:var(--text-body);
+  line-height:1.3;color:var(--color-ink-black);}
+.panel .ex{margin-top:var(--spacing-16);font-size:var(--text-body-sm);
+  color:var(--color-graphite);padding-left:var(--spacing-16);
+  border-left:1px solid var(--color-fog);}
+.panel .ex .kicker{margin-bottom:4px;}
+.panel .where{margin-top:var(--spacing-24);font-size:var(--text-body-sm);color:var(--color-ink-black);
+  padding-top:var(--spacing-16);border-top:1px solid var(--color-fog);
+  opacity:.45;transition:opacity .35s var(--ease-std);}
+.panel .where .pb{margin-top:2px;font-size:var(--text-body);line-height:1.2;
+  letter-spacing:-0.18px;color:var(--color-ink-black);}
+.panel .where .strat{margin-top:var(--spacing-16);display:flex;
+  gap:var(--spacing-16);align-items:flex-start;}
+.panel .where:hover,.panel .where:focus-within{opacity:1;}
+.btn.sm{font-size:var(--text-caption);padding:9px var(--spacing-16);}
+.shb{border:1px solid var(--color-fog);background:transparent;
+  border-radius:var(--radius-buttons);padding:7px var(--spacing-16);
+  font-size:var(--text-caption);color:var(--color-graphite);
+  min-width:96px;text-align:center;text-decoration:none;display:inline-block;
+  line-height:1.25;cursor:pointer;
+  transition:border-color .22s var(--ease-std),color .22s var(--ease-std);}
+.shb:hover{border-color:var(--color-ink-black);color:var(--color-ink-black);}
+.btn.dark.spin{background:var(--color-focus);border-color:var(--color-focus);
+  cursor:default;}
+.panel .where span{color:var(--color-graphite);}
+.panel .more,.panel .share{margin-top:var(--spacing-24);}
+.panel .more .kicker,.panel .share .kicker{display:block;margin-bottom:var(--spacing-8);}
+.panel .row2{display:flex;flex-wrap:wrap;gap:var(--spacing-8);}
+.panel .note{margin-top:var(--spacing-8);font-size:var(--text-caption);
+  color:var(--color-focus);opacity:0;transition:opacity .3s var(--ease-std);}
+.panel .note.on{opacity:1;}
+/* con el panel abierto se libera su ancho: nada queda debajo.
+   Se usa padding (no transform) porque un transform en un ancestro
+   reanclaría los elementos position:fixed que viven aquí dentro. */
+body.panelopen{padding-right:420px;}
+#codexWrap.on.panelopen{padding-right:calc(420px + var(--spacing-32));}
+
+.scrim{position:fixed;inset:0;background:var(--color-paper);opacity:0;pointer-events:none;
+  transition:opacity .25s;z-index:75;}
+.scrim.on{opacity:0;pointer-events:auto;}
+
+/* ---------- footer ---------- */
+.foot{margin-top:var(--spacing-64);padding:var(--spacing-32) 0 var(--spacing-64);
+  border-top:1px solid var(--color-fog);
+  font-size:var(--text-body-sm);color:var(--color-graphite);}
+.foot .credit{font-size:var(--text-body);color:var(--color-ink-black);
+  margin-bottom:var(--spacing-16);}
+.foot .credit a{text-decoration:underline;text-underline-offset:3px;}
+.foot a{color:var(--color-graphite);}
+.foot p + p{margin-top:var(--spacing-8);}
+.hint{display:none;margin-top:var(--spacing-16);font-size:var(--text-caption);color:var(--color-ash);}
+
+@media (max-width:860px){
+  .wrap,.nav-in,.menu-in{padding-left:var(--spacing-16);padding-right:var(--spacing-16);}
+  .pro-start h1{font-size:var(--text-heading);letter-spacing:-0.4px;}
+  .pl{font-size:var(--text-subheading);line-height:1.2;}
+  .pro-guide{gap:var(--spacing-24);padding:var(--spacing-32) var(--spacing-16);
+    justify-content:flex-start;overflow-y:auto;}
+  .guide-head h2{font-size:var(--text-subheading);letter-spacing:-0.24px;}
+  .guide-grid,.guide-keys{grid-template-columns:1fr;}
+  .pro-count,.pro-rail{display:none;}
+  .chead h2,.panel h3{font-size:var(--text-subheading);letter-spacing:-0.24px;}
+  .status .main{font-size:var(--text-body);}
+  .row{grid-template-columns:1fr;gap:4px;}
+  .hint{display:block;}
+  .codex{width:auto;margin-left:0;margin-right:calc(var(--spacing-16) * -1);
+    overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;}
+  .codex-stage{width:1000px;}
+  .zoombar .lvl,.zoombar button:not(.wide){display:none;}
+  #codexWrap.on{padding:var(--spacing-8) var(--spacing-16);}
+  #codexWrap.on .codex-stage{width:1000px;}
+  .center .k{font-size:var(--text-body-sm);}
+  .center .k.sm{font-size:var(--text-caption);}
+  body.panelopen,#codexWrap.on.panelopen{padding-right:0;}
+  .panel{width:100%;max-width:100%;top:auto;bottom:0;height:auto;max-height:78vh;
+    border-left:0;border-top:1px solid var(--color-fog);transform:translateY(102%);}
+  .panel.open{transform:none;}
+  .scrim.on{opacity:.7;}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-in">
+    <button class="wordmark" id="homeBtn" title="Volver a la introducción">The&nbsp;Bias&nbsp;Codex</button>
+    <button class="menu-btn" id="menuBtn" aria-label="Menú"><span></span><span></span><span></span></button>
+  </div>
+  <div class="menu" id="menu"><div class="menu-in">
+    <a href="#prologue">0 — Prólogo</a>
+    <a href="#ch1">1 — El códice</a>
+    <a href="#ch2">2 — Demasiada información</a>
+    <a href="#ch3">3 — Falta de significado</a>
+    <a href="#ch4">4 — Necesidad de actuar rápido</a>
+    <a href="#ch5">5 — ¿Qué deberíamos recordar?</a>
+  </div></div>
+</nav>
+
+<section id="prologue" class="state-start">
+  <div class="pro-stage">
+    <div class="pro-count"><span id="proNum">01</span> / 05</div>
+    <div class="pro-acts">
+      <button class="skip" id="skipIntro">Saltar la introducción</button>
+    </div>
+
+    <div class="pro-start" id="proStart">
+      <h1>The Bias Codex Artefact</h1>
+      <button class="btn dark start" id="startIntro">Iniciar</button>
+      <button class="sndlink" id="sndIntro">Silenciar</button>
+    </div>
+
+    <div class="pro-lines" id="proLines">
+      <p class="pl">Tu cerebro recibe cada día más de lo que puede sostener.</p>
+      <p class="pl">Para no detenerse, aprendió a tomar atajos.</p>
+      <p class="pl">Ciento ochenta y ocho atajos.</p>
+      <p class="pl">Te salvan a diario. Y a diario te engañan.</p>
+      <p class="pl">Este es el mapa completo de todos ellos.</p>
+    </div>
+
+    <div class="pro-guide" id="proGuide">
+      <div class="guide-head">
+        <div class="kicker">Antes de entrar</div>
+        <h2>Cómo se lee el mapa</h2>
+      </div>
+      <div class="guide-grid">
+        <div class="gi"><div class="badge sm">4</div>
+          <div><strong>Problemas</strong><span>En las esquinas. Los cuatro aprietos que el cerebro intenta resolver.</span></div></div>
+        <div class="gi"><div class="badge sm">20</div>
+          <div><strong>Estrategias</strong><span>Numeradas en el anillo. Cada una es una táctica para salir del aprieto.</span></div></div>
+        <div class="gi"><div class="badge sm">188</div>
+          <div><strong>Sesgos</strong><span>En los radios. Cada uno es el precio que cobra esa táctica.</span></div></div>
+      </div>
+      <div class="guide-keys">
+        <div><em>Clic en un radio</em> abre el sesgo y su definición</div>
+        <div><em>Clic en un número</em> acerca el mapa a esa estrategia</div>
+        <div><em>Arrastra</em> para recorrer · <em>+ / −</em> para el zoom</div>
+        <div><em>Volver</em> sube un nivel: estrategia, problema, todo</div>
+        <div><em>← →</em> recorre los sesgos · <em>↑ ↓</em> cambia de estrategia, sin detenerse en los límites</div>
+      </div>
+      <button class="btn dark enter" id="enterCodex">Entrar al códice</button>
+      <div class="guide-foot">El códice se abre solo en unos segundos
+        <span class="drain"><span id="guideFill"></span></span></div>
+    </div>
+
+    <div class="pro-rail"><span id="proFill"></span></div>
+  </div>
+</section>
+
+<main class="wrap">
+
+  <section class="chapter" id="ch1">
+    <div class="chead"><div class="badge">1</div><h2>El códice</h2></div>
+    <p class="csub">Cuatro <strong style="font-weight:400">problemas</strong> en las esquinas. Veinte <strong style="font-weight:400">estrategias</strong> numeradas en el anillo. Ciento ochenta y ocho <strong style="font-weight:400">sesgos</strong> en los radios. Elige un problema o una estrategia y el mapa se acerca a esa zona.</p>
+
+    <div id="codexWrap">
+      <div class="status">
+        <div class="lead">
+          <div class="badge sm" id="stBadge" style="display:none"></div>
+          <div class="txt">
+            <div class="eye" id="stEye">Vista completa</div>
+            <div class="main" id="stMain">Todo el códice</div>
+          </div>
+        </div>
+        <div class="tally" id="stTally"></div>
+        <div class="navbar">
+          <button class="clear" id="stBack">Volver</button>
+          <button class="clear" id="stAll">Todo el códice</button>
+        </div>
+        <div class="zoombar">
+          <button id="zOut" aria-label="Alejar">&#8722;</button>
+          <div class="lvl" id="zLvl">100%</div>
+          <button id="zIn" aria-label="Acercar">&#43;</button>
+          <button id="sndBtn" class="wide">Sonido</button>
+          <button id="fsBtn" class="wide fs">Ver en pantalla completa</button>
+        </div>
+      </div>
+
+      <p class="hint">Desliza el códice en horizontal para recorrerlo.</p>
+      <div class="codex" id="codex">
+        <div class="codex-stage" id="stage">
+          <div class="center" id="center">
+            <div class="k">188 sesgos</div>
+            <div class="v">20 estrategias · 4 problemas</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-deck">
+        <div class="controls">
+          <div class="search"><input id="q" type="search" placeholder="Buscar un sesgo en inglés o español…" autocomplete="off" spellcheck="false"></div>
+          <button class="btn dark" id="rand">Sesgo al azar</button>
+          <div class="chips" id="chips"></div>
+        </div>
+        <p class="keyhint"><em>&#8592; &#8594;</em> sesgos · <em>&#8593; &#8595;</em> estrategias ·
+          <em>S</em> silencia · <em>F</em> pantalla completa · <em>&#9003;</em> vuelve · <em>Esc</em> cierra</p>
+      </div>
+
+      <div class="listhint" id="listHint">
+        <div>El listado completo con las 188 definiciones está plegado.</div>
+        <button id="showAll">Desplegar el listado</button>
+      </div>
+
+      <div class="scrim" id="scrim"></div>
+      <aside class="panel" id="panel" aria-live="polite">
+        <button class="close" id="closeBtn" aria-label="Cerrar">&#215;</button>
+        <div id="panelBody"></div>
+      </aside>
+    </div>
+  </section>
+
+  <div id="chapters"></div>
+
+  <footer class="foot">
+    <p class="credit">Idea, concepto y artefacto web por <a href="https://www.linkedin.com/in/aahumadagomez/" target="_blank" rel="noopener">Andrés Ahumada</a>. Sonidos FX por Oculus Sounds.</p>
+    <p>Datos y geometría derivados del <a href="https://commons.wikimedia.org/wiki/File:Cognitive_Bias_Codex.svg" target="_blank" rel="noopener">Cognitive Bias Codex</a>, diseño de John Manoogian III, categorías de Buster Benson, fuente original Wikipedia (CC BY-SA 4.0). Nombres en español, definiciones y ejemplos reescritos para esta versión.</p>
+    <p><a href="#" id="replayIntro">Ver la introducción de nuevo</a> · también puedes pulsar «The Bias Codex» arriba para reiniciar la experiencia.</p>
+    <p>Sistema visual: Acolorbright — una sola tipografía en peso 400, sin sombras, sin iconos. El único color del sistema marca el foco activo.</p>
+  </footer>
+</main>
+
+<script>
+const CODEX = [{"en":"Too Much Information","es":"Demasiada información","c":[{"en":"We notice things already primed in memory or repeated often","es":"Notamos lo que ya está activado en la memoria o se repite seguido","d":"M99.6 -101.2 C 149.5 -151.7, 41.6 -208.9, 55.4 -278.5","cx":122.9,"cy":-617.9,"b":[{"n":"Availability heuristic","e":"Heurística de disponibilidad","s":"availability-heuristic","u":"https://en.wikipedia.org/wiki/Availability_heuristic","a":-88.3,"d":"M55.4 -278.5 C 69.5 -349.2, 10.8 -355.8, 12.9 -427.8","t":"Juzgas qué tan probable es algo por lo fácil que es recordar un ejemplo.","x":"Ves un reportaje sobre accidentes aéreos, cancelas el vuelo y manejas 800 km, que es bastante más riesgoso."},{"n":"Attentional bias","e":"Sesgo atencional","s":"attentional-bias","u":"https://en.wikipedia.org/wiki/Attentional_bias","a":-86.5,"d":"M55.4 -278.5 C 69.5 -349.2, 21.5 -355.4, 25.8 -427.2","t":"Tus percepciones se sesgan hacia aquello en lo que ya estás pensando.","x":"Estás pensando en comprar un auto rojo y de pronto la calle está llena de autos rojos."},{"n":"Illusory truth effect","e":"Efecto de la verdad ilusoria","s":"illusory-truth-effect","u":"https://en.wikipedia.org/wiki/Illusory_truth_effect","a":-84.8,"d":"M55.4 -278.5 C 69.5 -349.2, 32.2 -354.5, 38.7 -426.2","t":"Una afirmación repetida se siente más verdadera solo por ser familiar.","x":"Un dato falso repetido en tres grupos de WhatsApp termina sonándote razonable aunque nadie lo verificó."},{"n":"Mere–exposure effect","e":"Efecto de mera exposición","s":"mereexposure-effect","u":"https://en.wikipedia.org/wiki/Mere-exposure_effect","a":-83.1,"d":"M55.4 -278.5 C 69.5 -349.2, 42.9 -353.4, 51.6 -424.9","t":"Prefieres cosas simplemente porque las has visto antes.","x":"La canción que odiabas en la radio te empieza a gustar a la quinta semana de escucharla."},{"n":"Context effect","e":"Efecto del contexto","s":"context-effect","u":"https://en.wikipedia.org/wiki/Context_effect","a":-81.3,"d":"M55.4 -278.5 C 69.5 -349.2, 53.6 -351.9, 64.4 -423.1","t":"El entorno en que aprendes algo condiciona cómo lo recuerdas e interpretas.","x":"Estudias en silencio absoluto y rindes en una sala ruidosa: recuerdas menos de lo que sabías."},{"n":"Cue–dependent forgetting","e":"Olvido dependiente de claves","s":"cuedependent-forgetting","u":"https://en.wikipedia.org/wiki/Cue-dependent_forgetting","a":-79.6,"d":"M55.4 -278.5 C 69.5 -349.2, 64.2 -350.2, 77.1 -421.0","t":"No olvidas el dato: te falta la pista que lo activa.","x":"No te sale el nombre de un excompañero hasta que alguien menciona la oficina donde trabajaban juntos."},{"n":"Mood–congruent memory bias","e":"Memoria congruente con el ánimo","s":"moodcongruent-memory-bias","u":"https://en.wikipedia.org/wiki/Mood_congruence","a":-77.9,"d":"M55.4 -278.5 C 69.5 -349.2, 74.7 -348.1, 89.8 -418.5","t":"Recuerdas con más facilidad lo que encaja con tu estado de ánimo actual.","x":"Un día pésimo y solo te vienen a la mente los otros días pésimos."},{"n":"Frequency illusion","e":"Ilusión de frecuencia","s":"frequency-illusion","u":"https://en.wikipedia.org/wiki/Frequency_illusion","a":-76.2,"d":"M55.4 -278.5 C 69.5 -349.2, 85.2 -345.7, 102.4 -415.6","t":"Después de notar algo por primera vez, lo empiezas a ver en todas partes.","x":"Aprendes una palabra nueva y la lees tres veces esa misma semana."},{"n":"Baader–Meinhof Phenomenon","e":"Fenómeno Baader–Meinhof","s":"baadermeinhof-phenomenon","u":"https://en.wikipedia.org/wiki/Frequency_illusion","a":-74.4,"d":"M55.4 -278.5 C 69.5 -349.2, 95.6 -342.9, 114.9 -412.3","t":"Nombre popular de la ilusión de frecuencia: lo nuevo parece multiplicarse.","x":"Te recomiendan una banda desconocida y al día siguiente suena en el café y en un aviso."},{"n":"Empathy gap","e":"Brecha de empatía","s":"empathy-gap","u":"https://en.wikipedia.org/wiki/Empathy_gap","a":-72.7,"d":"M55.4 -278.5 C 69.5 -349.2, 105.9 -339.9, 127.3 -408.6","t":"Subestimas cuánto cambian tus decisiones según el estado emocional en que estés.","x":"Haces la lista del supermercado con hambre y llegas con el carro lleno de cosas que no necesitabas."},{"n":"Omission bias","e":"Sesgo de omisión","s":"omission-bias","u":"https://en.wikipedia.org/wiki/Omission_bias","a":-71.0,"d":"M55.4 -278.5 C 69.5 -349.2, 116.1 -336.5, 139.6 -404.6","t":"Juzgas más grave el daño por acción que el mismo daño por inacción.","x":"Te parece peor dar un remedio con 1% de riesgo que no darlo cuando no darlo tiene 5%."},{"n":"Base rate fallacy","e":"Falacia de la tasa base","s":"base-rate-fallacy","u":"https://en.wikipedia.org/wiki/Base_rate_fallacy","a":-69.2,"d":"M55.4 -278.5 C 69.5 -349.2, 126.2 -332.9, 151.8 -400.2","t":"Ignoras la frecuencia general de algo y te fijas solo en el caso concreto.","x":"Un test con 95% de acierto te da positivo y entras en pánico, sin ver que la enfermedad afecta a 1 de cada 10.000."}]},{"en":"Bizarre, funny, visually striking, or anthropomorphic things stick out more than non-bizarre/unfunny things","es":"Lo extraño, gracioso o llamativo destaca sobre lo corriente","d":"M99.6 -101.2 C 149.5 -151.7, 101.8 -187.1, 135.8 -249.4","cx":301.2,"cy":-553.4,"b":[{"n":"Bizarreness effect","e":"Efecto de lo bizarro","s":"bizarreness-effect","u":"https://en.wikipedia.org/wiki/Bizarreness_effect","a":-65.8,"d":"M135.8 -249.4 C 170.2 -312.7, 146.1 -324.6, 175.7 -390.3","t":"Lo extraño se recuerda mejor que lo común.","x":"De toda la reunión, lo único que recuerdas es que alguien entró disfrazado."},{"n":"Humor effect","e":"Efecto del humor","s":"humor-effect","u":"https://en.wikipedia.org/wiki/List_of_cognitive_biases#Humor_effect","a":-64.0,"d":"M135.8 -249.4 C 170.2 -312.7, 155.8 -320.1, 187.4 -384.8","t":"Lo gracioso se recuerda mejor porque capta más atención y procesamiento.","x":"La única diapositiva que la sala recuerda es la que tenía el chiste."},{"n":"Von Restorff effect","e":"Efecto Von Restorff","s":"von-restorff-effect","u":"https://en.wikipedia.org/wiki/Von_Restorff_effect","a":-62.3,"d":"M135.8 -249.4 C 170.2 -312.7, 165.4 -315.2, 198.9 -379.0","t":"El elemento que rompe el patrón de una lista es el que se queda grabado.","x":"En una lista de diez tareas recuerdas la única escrita en mayúsculas."},{"n":"Picture superiority effect","e":"Superioridad de la imagen","s":"picture-superiority-effect","u":"https://en.wikipedia.org/wiki/Picture_superiority_effect","a":-60.6,"d":"M135.8 -249.4 C 170.2 -312.7, 174.9 -310.1, 210.3 -372.8","t":"Las imágenes se recuerdan mucho mejor que las palabras.","x":"Olvidas el nombre del expositor pero recuerdas con nitidez el gráfico que mostró."},{"n":"Self–relevance effect","e":"Efecto de autorreferencia","s":"selfrelevance-effect","u":"https://en.wikipedia.org/wiki/Self-reference_effect","a":-58.8,"d":"M135.8 -249.4 C 170.2 -312.7, 184.2 -304.7, 221.4 -366.3","t":"Recuerdas mejor la información que conectas contigo mismo.","x":"Entre cien apellidos en una lista, el tuyo salta a la vista solo."},{"n":"Negativity bias","e":"Sesgo de negatividad","s":"negativity-bias","u":"https://en.wikipedia.org/wiki/Negativity_bias","a":-57.1,"d":"M135.8 -249.4 C 170.2 -312.7, 193.3 -299.0, 232.4 -359.4","t":"Lo negativo pesa más que lo positivo de igual intensidad.","x":"Nueve comentarios buenos y uno malo sobre tu presentación: piensas todo el fin de semana en el malo."}]},{"en":"We notice when something has changed","es":"Notamos cuando algo ha cambiado","d":"M99.6 -101.2 C 149.5 -151.7, 143.6 -157.3, 191.5 -209.7","cx":424.8,"cy":-465.2,"b":[{"n":"Anchoring","e":"Anclaje","s":"anchoring","u":"https://en.wikipedia.org/wiki/Anchoring_(cognitive_bias)","a":-53.7,"d":"M191.5 -209.7 C 240.1 -262.9, 211.0 -286.7, 253.7 -344.7","t":"El primer número que ves condiciona todas tus estimaciones siguientes.","x":"El vendedor parte en $900.000, cierras en $600.000 y sientes que ganaste, aunque la cosa valía $400.000."},{"n":"Conservatism","e":"Conservadurismo cognitivo","s":"conservatism","u":"https://en.wikipedia.org/wiki/Conservatism_(belief_revision)","a":-51.9,"d":"M191.5 -209.7 C 240.1 -262.9, 219.6 -280.2, 264.0 -336.9","t":"Actualizas tus creencias demasiado poco ante evidencia nueva.","x":"Dos trimestres seguidos de caída y sigues proyectando el crecimiento del plan original."},{"n":"Contrast effect","e":"Efecto de contraste","s":"contrast-effect","u":"https://en.wikipedia.org/wiki/Contrast_effect","a":-50.2,"d":"M191.5 -209.7 C 240.1 -262.9, 227.9 -273.5, 274.0 -328.8","t":"Evalúas algo por comparación con lo que acabas de ver, no en sí mismo.","x":"El departamento te parece amplio porque el anterior que viste era diminuto."},{"n":"Distinction bias","e":"Sesgo de distinción","s":"distinction-bias","u":"https://en.wikipedia.org/wiki/Distinction_bias","a":-48.5,"d":"M191.5 -209.7 C 240.1 -262.9, 236.1 -266.5, 283.8 -320.4","t":"Comparar dos opciones lado a lado exagera diferencias que luego no importan.","x":"Comparas dos notebooks y pagas más por dos horas extra de batería que después nunca notas."},{"n":"Focusing effect","e":"Efecto de foco","s":"focusing-effect","u":"https://en.wikipedia.org/wiki/Anchoring_(cognitive_bias)","a":-46.7,"d":"M191.5 -209.7 C 240.1 -262.9, 244.0 -259.2, 293.4 -311.6","t":"Das demasiado peso a un solo atributo al predecir cómo te sentirás.","x":"Crees que mudarte a la costa te hará feliz y solo piensas en el mar, no en las dos horas de viaje diario."},{"n":"Framing effect","e":"Efecto de encuadre","s":"framing-effect","u":"https://en.wikipedia.org/wiki/Framing_effect_(psychology)","a":-45.0,"d":"M191.5 -209.7 C 240.1 -262.9, 251.7 -251.7, 302.6 -302.6","t":"La misma información cambia tu decisión según cómo se enuncie.","x":"Prefieres la carne «80% magra» antes que la «20% grasa», que es exactamente la misma carne."},{"n":"Money illusion","e":"Ilusión monetaria","s":"money-illusion","u":"https://en.wikipedia.org/wiki/Money_illusion","a":-43.3,"d":"M191.5 -209.7 C 240.1 -262.9, 259.2 -244.0, 311.6 -293.4","t":"Piensas en pesos nominales y olvidas el efecto de la inflación.","x":"Te suben el sueldo 3% con 5% de inflación y lo celebras como un aumento."},{"n":"Weber–Fechner law","e":"Ley de Weber–Fechner","s":"weberfechner-law","u":"https://en.wikipedia.org/wiki/Weber–Fechner_law","a":-41.5,"d":"M191.5 -209.7 C 240.1 -262.9, 266.5 -236.1, 320.4 -283.8","t":"Percibes diferencias de forma relativa, no absoluta: $10 pesan distinto según el total.","x":"Caminas diez cuadras para ahorrar $2.000 en un café, pero no para ahorrar los mismos $2.000 en un notebook."}]},{"en":"We are drawn to details that confirm our own existing beliefs","es":"Nos atraen los detalles que confirman lo que ya creemos","d":"M99.6 -101.2 C 149.5 -151.7, 188.6 -99.0, 251.5 -132.0","cx":557.8,"cy":-292.8,"b":[{"n":"Confirmation bias","e":"Sesgo de confirmación","s":"confirmation-bias","u":"https://en.wikipedia.org/wiki/Confirmation_bias","a":-38.1,"d":"M251.5 -132.0 C 315.2 -165.4, 280.2 -219.6, 336.9 -264.0","t":"Buscas e interpretas evidencia que confirma lo que ya crees.","x":"Buscas en Google «por qué X funciona» en vez de «X funciona o no»."},{"n":"Congruence bias","e":"Sesgo de congruencia","s":"congruence-bias","u":"https://en.wikipedia.org/wiki/Congruence_bias","a":-36.3,"d":"M251.5 -132.0 C 315.2 -165.4, 286.7 -211.0, 344.7 -253.7","t":"Pruebas solo tu hipótesis directa y nunca las alternativas que la refutarían.","x":"Demuestras que tu campaña funciona midiendo solo a quienes la vieron, sin grupo de control."},{"n":"Post–purchase rationalization","e":"Racionalización post-compra","s":"postpurchase-rationalization","u":"https://en.wikipedia.org/wiki/Choice-supportive_bias","a":-34.6,"d":"M251.5 -132.0 C 315.2 -165.4, 293.0 -202.2, 352.2 -243.1","t":"Tras comprar, inventas razones para convencerte de que fue buena idea.","x":"Después de gastar de más en el teléfono, empiezas a destacar lo buena que es la cámara."},{"n":"Choice–supportive bias","e":"Sesgo de apoyo a la elección","s":"choicesupportive-bias","u":"https://en.wikipedia.org/wiki/Choice-supportive_bias","a":-32.9,"d":"M251.5 -132.0 C 315.2 -165.4, 299.0 -193.3, 359.4 -232.4","t":"Recuerdas tus elecciones pasadas mejor de lo que realmente fueron.","x":"Recuerdas el auto que compraste mejor de lo que fue, y el que descartaste peor de lo que era."},{"n":"Selective perception","e":"Percepción selectiva","s":"selective-perception","u":"https://en.wikipedia.org/wiki/Selective_perception","a":-31.2,"d":"M251.5 -132.0 C 315.2 -165.4, 304.7 -184.2, 366.3 -221.4","t":"Tus expectativas filtran lo que llegas a percibir.","x":"Dos hinchas ven el mismo penal y cada uno ve una falta distinta."},{"n":"Observer–expectancy effect","e":"Expectativa del observador","s":"observerexpectancy-effect","u":"https://en.wikipedia.org/wiki/Observer-expectancy_effect","a":-29.4,"d":"M251.5 -132.0 C 315.2 -165.4, 310.1 -174.9, 372.8 -210.3","t":"El investigador influye inconscientemente en el resultado que espera obtener.","x":"El profesor da más tiempo a los alumnos de quienes espera buenas respuestas, y a ese grupo le va mejor."},{"n":"Experimenter's bias","e":"Sesgo del experimentador","s":"experimenter-s-bias","u":"https://en.wikipedia.org/wiki/Observer-expectancy_effect","a":-27.7,"d":"M251.5 -132.0 C 315.2 -165.4, 315.2 -165.4, 379.0 -198.9","t":"Las expectativas de quien mide contaminan el diseño y la interpretación.","x":"Redactas la encuesta con preguntas que empujan hacia la respuesta que querías medir."},{"n":"Observer effect","e":"Efecto del observador","s":"observer-effect","u":"https://en.wikipedia.org/wiki/Observer-expectancy_effect","a":-26.0,"d":"M251.5 -132.0 C 315.2 -165.4, 320.1 -155.8, 384.8 -187.4","t":"Medir algo altera aquello que se está midiendo.","x":"El equipo cierra el doble de tickets la semana en que anuncias que vas a medir los tickets."},{"n":"Expectation bias","e":"Sesgo de expectativa","s":"expectation-bias","u":"https://en.wikipedia.org/wiki/Observer-expectancy_effect","a":-24.2,"d":"M251.5 -132.0 C 315.2 -165.4, 324.6 -146.1, 390.3 -175.7","t":"Tiendes a aceptar los datos que calzan con lo que esperabas y descartar el resto.","x":"Descartas el dato raro como «error de medición» porque no calza con tu hipótesis."},{"n":"Ostrich effect","e":"Efecto avestruz","s":"ostrich-effect","u":"https://en.wikipedia.org/wiki/Ostrich_effect","a":-22.5,"d":"M251.5 -132.0 C 315.2 -165.4, 328.9 -136.2, 395.4 -163.8","t":"Evitas mirar información negativa aunque sea relevante para ti.","x":"No abres la app del banco en todo el mes porque sabes que el saldo está mal."},{"n":"Subjective validation","e":"Validación subjetiva","s":"subjective-validation","u":"https://en.wikipedia.org/wiki/Subjective_validation","a":-20.8,"d":"M251.5 -132.0 C 315.2 -165.4, 332.9 -126.2, 400.2 -151.8","t":"Una descripción vaga te parece exacta porque la llenas con tu propio caso.","x":"Lees el horóscopo del día y te parece increíblemente preciso."},{"n":"Continued influence effect","e":"Influencia continuada","s":"continued-influence-effect","u":"https://en.wikipedia.org/wiki/Confirmation_bias#continued_influence_effect","a":-19.0,"d":"M251.5 -132.0 C 315.2 -165.4, 336.5 -116.1, 404.6 -139.6","t":"La información falsa sigue influyendo aunque ya fue corregida.","x":"Sigues evitando una marca por un retiro de producto que fue desmentido hace un año."},{"n":"Semmelweis reflex","e":"Reflejo Semmelweis","s":"semmelweis-reflex","u":"https://en.wikipedia.org/wiki/Semmelweis_reflex","a":-17.3,"d":"M251.5 -132.0 C 315.2 -165.4, 339.9 -105.9, 408.6 -127.3","t":"Rechazas automáticamente evidencia que contradice el paradigma establecido.","x":"El comité rechaza el estudio sin leerlo porque contradice el manual con el que todos se formaron."}]},{"en":"We notice flaws in others more easily than we notice flaws in ourselves","es":"Vemos los defectos ajenos más fácil que los propios","d":"M99.6 -101.2 C 149.5 -151.7, 208.3 -44.7, 277.7 -59.6","cx":616.0,"cy":-132.2,"b":[{"n":"Bias blind spot","e":"Punto ciego del sesgo","s":"bias-blind-spot","u":"https://en.wikipedia.org/wiki/Bias_blind_spot","a":-13.8,"d":"M277.7 -59.6 C 348.1 -74.7, 345.7 -85.2, 415.6 -102.4","t":"Reconoces sesgos en los demás pero te crees inmune a ellos.","x":"Explicas con lujo de detalle los sesgos de tu jefe y estás seguro de que tus decisiones son objetivas."},{"n":"Naïve cynicism","e":"Cinismo ingenuo","s":"naive-cynicism","u":"https://en.wikipedia.org/wiki/Naïve_cynicism","a":-12.1,"d":"M277.7 -59.6 C 348.1 -74.7, 348.1 -74.7, 418.5 -89.8","t":"Asumes que los otros son más egoístas y sesgados de lo que realmente son.","x":"Asumes que el área vecina pidió más presupuesto por ambición, no porque de verdad lo necesite."},{"n":"Naïve realism","e":"Realismo ingenuo","s":"naive-realism","u":"https://en.wikipedia.org/wiki/Naïve_realism_(psychology)","a":-10.4,"d":"M277.7 -59.6 C 348.1 -74.7, 350.2 -64.2, 421.0 -77.1","t":"Crees que ves la realidad objetivamente y que quien discrepa está mal informado.","x":"Crees que quien vota distinto no vio las mismas noticias, porque si las hubiera visto pensaría como tú."}]}]},{"en":"Not Enough Meaning","es":"Falta de significado","c":[{"en":"We tend to find stories and patterns even when looking at sparse data","es":"Encontramos historias y patrones incluso en datos escasos","d":"M90.1 109.8 C 135.1 164.7, 212.6 12.9, 283.5 17.1","cx":628.9,"cy":38.0,"b":[{"n":"Confabulation","e":"Confabulación","s":"confabulation","u":"https://en.wikipedia.org/wiki/Confabulation","a":-6.9,"d":"M283.5 17.1 C 355.4 21.5, 353.4 -42.9, 424.9 -51.6","t":"Tu memoria rellena huecos con detalles inventados que sientes como ciertos.","x":"Cuentas con lujo de detalle una escena de tu infancia que en realidad viste en un video familiar."},{"n":"Clustering illusion","e":"Ilusión de agrupamiento","s":"clustering-illusion","u":"https://en.wikipedia.org/wiki/Clustering_illusion","a":-5.2,"d":"M283.5 17.1 C 355.4 21.5, 354.5 -32.2, 426.2 -38.7","t":"Ves rachas y patrones en secuencias que son puro azar.","x":"Salen cinco caras seguidas y concluyes que la moneda está cargada."},{"n":"Insensitivity to sample size","e":"Insensibilidad al tamaño muestral","s":"insensitivity-to-sample-size","u":"https://en.wikipedia.org/wiki/Insensitivity_to_sample_size","a":-3.5,"d":"M283.5 17.1 C 355.4 21.5, 355.4 -21.5, 427.2 -25.8","t":"Sacas conclusiones de muestras demasiado pequeñas para sostenerlas.","x":"Cambias el diseño del sitio porque 3 de 5 usuarios en una prueba prefirieron el botón azul."},{"n":"Neglect of probability","e":"Desatención a la probabilidad","s":"neglect-of-probability","u":"https://en.wikipedia.org/wiki/Neglect_of_probability","a":-1.7,"d":"M283.5 17.1 C 355.4 21.5, 355.8 -10.8, 427.8 -12.9","t":"Al decidir bajo incertidumbre ignoras las probabilidades por completo.","x":"Te aterra el ascensor y no el auto, aunque manejas dos horas todos los días."},{"n":"Anecdotal fallacy","e":"Falacia anecdótica","s":"anecdotal-fallacy","u":"https://en.wikipedia.org/wiki/Anecdotal_evidence","a":0.0,"d":"M283.5 17.1 C 355.4 21.5, 356.0 0.0, 428.0 0.0","t":"Un caso personal vívido te convence más que datos agregados.","x":"«Mi abuelo fumó hasta los noventa», y con eso das por refutada la estadística."},{"n":"Illusion of validity","e":"Ilusión de validez","s":"illusion-of-validity","u":"https://en.wikipedia.org/wiki/Illusion_of_validity","a":1.7,"d":"M283.5 17.1 C 355.4 21.5, 355.8 10.8, 427.8 12.9","t":"Confías de más en tus predicciones cuando los datos encajan en una historia clara.","x":"El candidato cuenta una historia coherente en la entrevista y te convences de que será el mejor del equipo."},{"n":"Masked–man fallacy","e":"Falacia del hombre enmascarado","s":"maskedman-fallacy","u":"https://en.wikipedia.org/wiki/Masked-man_fallacy","a":3.5,"d":"M283.5 17.1 C 355.4 21.5, 355.4 21.5, 427.2 25.8","t":"Sustituyes términos equivalentes dentro de una creencia y la conclusión falla.","x":"Sabes que el autor del libro te encanta y que tu vecino te cae mal, sin saber que son la misma persona."},{"n":"Recency illusion","e":"Ilusión de novedad","s":"recency-illusion","u":"https://en.wikipedia.org/wiki/Recency_illusion","a":5.2,"d":"M283.5 17.1 C 355.4 21.5, 354.5 32.2, 426.2 38.7","t":"Crees que algo es nuevo solo porque tú lo acabas de notar.","x":"Crees que usar «tipo» como muletilla es cosa de ahora, cuando lleva décadas en uso."},{"n":"Gambler's fallacy","e":"Falacia del jugador","s":"gambler-s-fallacy","u":"https://en.wikipedia.org/wiki/Gambler's_fallacy","a":6.9,"d":"M283.5 17.1 C 355.4 21.5, 353.4 42.9, 424.9 51.6","t":"Crees que lo que no ha salido \"ya toca\" en eventos independientes.","x":"Llevas cinco rojos en la ruleta y apuestas al negro porque «ya tiene que salir»."},{"n":"Hot–hand fallacy","e":"Falacia de la mano caliente","s":"hothand-fallacy","u":"https://en.wikipedia.org/wiki/Hot-hand_fallacy","a":8.7,"d":"M283.5 17.1 C 355.4 21.5, 351.9 53.6, 423.1 64.4","t":"Crees que una racha de éxitos predice el siguiente éxito.","x":"Metió tres triples seguidos y todos le pasan la pelota como si el cuarto fuera seguro."},{"n":"Illusory correlation","e":"Correlación ilusoria","s":"illusory-correlation","u":"https://en.wikipedia.org/wiki/Illusory_correlation","a":10.4,"d":"M283.5 17.1 C 355.4 21.5, 350.2 64.2, 421.0 77.1","t":"Ves relación entre dos variables que en realidad no están ligadas.","x":"Juras que siempre llueve justo cuando lavas el auto."},{"n":"Pareidolia","e":"Pareidolia","s":"pareidolia","u":"https://en.wikipedia.org/wiki/Pareidolia","a":12.1,"d":"M283.5 17.1 C 355.4 21.5, 348.1 74.7, 418.5 89.8","t":"Ves formas conocidas —caras, figuras— en estímulos aleatorios.","x":"Ves una cara en el frente de un auto o en una mancha de humedad del techo."},{"n":"Anthropomorphism","e":"Antropomorfismo","s":"anthropomorphism","u":"https://en.wikipedia.org/wiki/Anthropomorphism#Psychology","a":13.8,"d":"M283.5 17.1 C 355.4 21.5, 345.7 85.2, 415.6 102.4","t":"Atribuyes intenciones y emociones humanas a objetos, animales o sistemas.","x":"Le pides perdón a la aspiradora robot cuando la chocas con el mueble."}]},{"en":"We fill in characteristics from stereotypes, generalities, and prior histories","es":"Rellenamos con estereotipos, generalidades e historias previas","d":"M90.1 109.8 C 135.1 164.7, 190.1 96.1, 253.4 128.2","cx":562.2,"cy":284.3,"b":[{"n":"Group attribution error","e":"Error de atribución grupal","s":"group-attribution-error","u":"https://en.wikipedia.org/wiki/Group_attribution_error","a":17.3,"d":"M253.4 128.2 C 317.7 160.7, 339.9 105.9, 408.6 127.3","t":"Asumes que un individuo representa las creencias de todo su grupo.","x":"Un cliente de una empresa reclama de mala forma y asumes que toda esa empresa es conflictiva."},{"n":"Ultimate attribution error","e":"Error último de atribución","s":"ultimate-attribution-error","u":"https://en.wikipedia.org/wiki/Ultimate_attribution_error","a":19.0,"d":"M253.4 128.2 C 317.7 160.7, 336.5 116.1, 404.6 139.6","t":"Explicas lo malo del otro grupo por su carácter y lo del tuyo por circunstancias.","x":"Si tu equipo llega tarde fue el tráfico; si llega tarde el otro equipo, es desorden."},{"n":"Stereotyping","e":"Estereotipación","s":"stereotyping","u":"https://en.wikipedia.org/wiki/Stereotype","a":20.8,"d":"M253.4 128.2 C 317.7 160.7, 332.9 126.2, 400.2 151.8","t":"Atribuyes rasgos a una persona solo por el grupo al que pertenece.","x":"Asumes que el más joven de la reunión sabrá arreglar el proyector."},{"n":"Essentialism","e":"Esencialismo","s":"essentialism","u":"https://en.wikipedia.org/wiki/Essentialism","a":22.5,"d":"M253.4 128.2 C 317.7 160.7, 328.9 136.2, 395.4 163.8","t":"Supones que las categorías tienen una esencia interna fija e inmutable.","x":"Hablas de «los chilenos» como si compartieran una forma de ser idéntica e inmutable."},{"n":"Functional fixedness","e":"Fijación funcional","s":"functional-fixedness","u":"https://en.wikipedia.org/wiki/Functional_fixedness","a":24.2,"d":"M253.4 128.2 C 317.7 160.7, 324.6 146.1, 390.3 175.7","t":"No ves usos alternativos de un objeto más allá del habitual.","x":"Buscas un destornillador por toda la casa teniendo una moneda en el bolsillo."},{"n":"Moral credential effect","e":"Efecto de credencial moral","s":"moral-credential-effect","u":"https://en.wikipedia.org/wiki/Self-licensing","a":26.0,"d":"M253.4 128.2 C 317.7 160.7, 320.1 155.8, 384.8 187.4","t":"Una buena acción previa te da permiso interno para una cuestionable después.","x":"Donaste ayer, así que hoy te sientes con derecho a no reciclar."},{"n":"Just–world hypothesis","e":"Hipótesis del mundo justo","s":"justworld-hypothesis","u":"https://en.wikipedia.org/wiki/Just-world_hypothesis","a":27.7,"d":"M253.4 128.2 C 317.7 160.7, 315.2 165.4, 379.0 198.9","t":"Asumes que la gente recibe lo que merece, así que la víctima algo hizo.","x":"Te enteras de un despido y lo primero que preguntas es qué hizo mal esa persona."},{"n":"Argument from fallacy","e":"Argumento de la falacia","s":"argument-from-fallacy","u":"https://en.wikipedia.org/wiki/Argument_from_fallacy","a":29.4,"d":"M253.4 128.2 C 317.7 160.7, 310.1 174.9, 372.8 210.3","t":"Concluyes que algo es falso solo porque el argumento que lo defendía era malo.","x":"El argumento a favor del proyecto estaba mal construido, así que decides que el proyecto es malo."},{"n":"Authority bias","e":"Sesgo de autoridad","s":"authority-bias","u":"https://en.wikipedia.org/wiki/Authority_bias","a":31.2,"d":"M253.4 128.2 C 317.7 160.7, 304.7 184.2, 366.3 221.4","t":"Das más peso a una opinión por venir de una figura de autoridad.","x":"Aceptas la cifra sin revisarla porque la dijo el gerente general."},{"n":"Automation bias","e":"Sesgo de automatización","s":"automation-bias","u":"https://en.wikipedia.org/wiki/Automation_bias","a":32.9,"d":"M253.4 128.2 C 317.7 160.7, 299.0 193.3, 359.4 232.4","t":"Confías en la recomendación del sistema automatizado por sobre tu propio criterio.","x":"El GPS te manda hacia una calle cortada y doblas igual."},{"n":"Bandwagon effect","e":"Efecto arrastre","s":"bandwagon-effect","u":"https://en.wikipedia.org/wiki/Bandwagon_effect","a":34.6,"d":"M253.4 128.2 C 317.7 160.7, 293.0 202.2, 352.2 243.1","t":"Adoptas una creencia porque muchos ya la adoptaron.","x":"Compras la acción porque todo tu grupo de inversión la está comprando."},{"n":"Placebo effect","e":"Efecto placebo","s":"placebo-effect","u":"https://en.wikipedia.org/wiki/Placebo","a":36.3,"d":"M253.4 128.2 C 317.7 160.7, 286.7 211.0, 344.7 253.7","t":"Esperar un efecto produce ese efecto, sin principio activo de por medio.","x":"El dolor de cabeza cede quince minutos después de la pastilla, antes de que pudiera hacer efecto."}]},{"en":"We imagine things and people we're familiar with or fond of as better","es":"Imaginamos mejor lo que nos resulta familiar o querido","d":"M90.1 109.8 C 135.1 164.7, 146.0 155.1, 194.7 206.8","cx":431.8,"cy":458.7,"b":[{"n":"Out–group homogeneity bias","e":"Homogeneidad del exogrupo","s":"outgroup-homogeneity-bias","u":"https://en.wikipedia.org/wiki/Out-group_homogeneity","a":39.8,"d":"M194.7 206.8 C 244.0 259.2, 273.5 227.9, 328.8 274.0","t":"\"Ellos\" te parecen todos iguales; \"nosotros\" somos diversos.","x":"«Los de marketing» te parecen todos iguales; en tu equipo cada uno es un mundo aparte."},{"n":"Cross–race effect","e":"Efecto de otra etnia","s":"crossrace-effect","u":"https://en.wikipedia.org/wiki/Cross-race_effect","a":41.5,"d":"M194.7 206.8 C 244.0 259.2, 266.5 236.1, 320.4 283.8","t":"Te cuesta más distinguir y recordar rostros de grupos étnicos ajenos al tuyo.","x":"Te cuesta distinguir a dos actores de una película extranjera que para otros no se parecen en nada."},{"n":"In–group favoritism","e":"Favoritismo endogrupal","s":"ingroup-favoritism","u":"https://en.wikipedia.org/wiki/In-group_favoritism","a":43.3,"d":"M194.7 206.8 C 244.0 259.2, 259.2 244.0, 311.6 293.4","t":"Favoreces a los miembros de tu propio grupo casi por defecto.","x":"Apruebas bastante más rápido el proyecto que viene de tu propia área."},{"n":"Halo effect","e":"Efecto halo","s":"halo-effect","u":"https://en.wikipedia.org/wiki/Halo_effect","a":45.0,"d":"M194.7 206.8 C 244.0 259.2, 251.7 251.7, 302.6 302.6","t":"Un rasgo positivo tiñe tu evaluación de todos los demás rasgos.","x":"El postulante llegó impecable y habla bien, así que asumes que también es ordenado con los números."},{"n":"Cheerleader effect","e":"Efecto animadora","s":"cheerleader-effect","u":"https://en.wikipedia.org/wiki/Cheerleader_effect","a":46.7,"d":"M194.7 206.8 C 244.0 259.2, 244.0 259.2, 293.4 311.6","t":"Las personas parecen más atractivas en grupo que individualmente.","x":"La foto grupal te parece favorecedora y la individual no, siendo la misma cara."},{"n":"Positivity effect","e":"Efecto de positividad","s":"positivity-effect","u":"https://en.wikipedia.org/wiki/Positivity_effect","a":48.5,"d":"M194.7 206.8 C 244.0 259.2, 236.1 266.5, 283.8 320.4","t":"Con la edad, se recuerda y atiende proporcionalmente más lo positivo.","x":"Tu papá recuerda de ese viaje solo las risas, nunca las doce horas de bus."},{"n":"Not invented here","e":"Síndrome de «no inventado aquí»","s":"not-invented-here","u":"https://en.wikipedia.org/wiki/Not_invented_here","a":50.2,"d":"M194.7 206.8 C 244.0 259.2, 227.9 273.5, 274.0 328.8","t":"Desprecias ideas o soluciones por venir de fuera de tu equipo.","x":"El equipo descarta una librería probada para escribir la suya propia desde cero."},{"n":"Reactive devaluation","e":"Devaluación reactiva","s":"reactive-devaluation","u":"https://en.wikipedia.org/wiki/Reactive_devaluation","a":51.9,"d":"M194.7 206.8 C 244.0 259.2, 219.6 280.2, 264.0 336.9","t":"Devalúas una propuesta solo por venir de la contraparte o del adversario.","x":"La misma propuesta te parece razonable viniendo del jefe y sospechosa viniendo del sindicato."},{"n":"Well–traveled road effect","e":"Efecto del camino conocido","s":"welltraveled-road-effect","u":"https://en.wikipedia.org/wiki/Well_travelled_road_effect","a":53.7,"d":"M194.7 206.8 C 244.0 259.2, 211.0 286.7, 253.7 344.7","t":"Subestimas el tiempo de las rutas y tareas que haces siempre.","x":"Calculas veinte minutos al trabajo porque lo haces siempre, y siempre llegas en treinta y cinco."}]},{"en":"We simplify probabilities and numbers to make them easier to think about","es":"Simplificamos probabilidades y números para poder pensarlos","d":"M90.1 109.8 C 135.1 164.7, 93.2 191.5, 124.3 255.3","cx":275.8,"cy":566.4,"b":[{"n":"Mental accounting","e":"Contabilidad mental","s":"mental-accounting","u":"https://en.wikipedia.org/wiki/Mental_accounting","a":57.1,"d":"M124.3 255.3 C 155.8 320.1, 193.3 299.0, 232.4 359.4","t":"Tratas el mismo dinero distinto según el \"bolsillo\" mental donde lo pusiste.","x":"Cuidas cada peso del sueldo pero el aguinaldo se va en una noche sin que duela."},{"n":"Appeal to probability fallacy","e":"Apelación a la probabilidad","s":"appeal-to-probability-fallacy","u":"https://en.wikipedia.org/wiki/Appeal_to_probability","a":58.8,"d":"M124.3 255.3 C 155.8 320.1, 184.2 304.7, 221.4 366.3","t":"Tratas lo que probablemente ocurrirá como si ya fuera un hecho.","x":"«Con esta cantidad de usuarios alguien va a pagar», y armas el presupuesto como si ya hubieran pagado."},{"n":"Normalcy bias","e":"Sesgo de normalidad","s":"normalcy-bias","u":"https://en.wikipedia.org/wiki/Normalcy_bias","a":60.6,"d":"M124.3 255.3 C 155.8 320.1, 174.9 310.1, 210.3 372.8","t":"Subestimas la posibilidad de un desastre porque nunca te ha pasado.","x":"Suena la alarma de incendio y sigues trabajando porque siempre ha sido un simulacro."},{"n":"Murphy's Law","e":"Ley de Murphy","s":"murphy-s-law","u":"https://en.wikipedia.org/wiki/Murphy's_law","a":62.3,"d":"M124.3 255.3 C 155.8 320.1, 165.4 315.2, 198.9 379.0","t":"Si algo puede salir mal, asumes que saldrá mal.","x":"Antes de la demo das por hecho que algo va a fallar y pasas el día esperando el desastre."},{"n":"Zero sum bias","e":"Sesgo de suma cero","s":"zero-sum-bias","u":"https://en.wikipedia.org/wiki/Zero-sum_thinking","a":64.0,"d":"M124.3 255.3 C 155.8 320.1, 155.8 320.1, 187.4 384.8","t":"Asumes que lo que gana uno lo pierde otro, aunque el total pueda crecer.","x":"Crees que si al área vecina le suben el presupuesto, el tuyo necesariamente baja."},{"n":"Survivorship bias","e":"Sesgo de supervivencia","s":"survivorship-bias","u":"https://en.wikipedia.org/wiki/Survivorship_bias","a":65.8,"d":"M124.3 255.3 C 155.8 320.1, 146.1 324.6, 175.7 390.3","t":"Analizas solo lo que sobrevivió e ignoras todo lo que no llegó a verse.","x":"Estudias las startups que triunfaron y copias sus prácticas, sin mirar las mil que hicieron lo mismo y cerraron."},{"n":"Subadditivity effect","e":"Efecto de subaditividad","s":"subadditivity-effect","u":"https://en.wikipedia.org/wiki/Subadditivity_effect","a":67.5,"d":"M124.3 255.3 C 155.8 320.1, 136.2 328.9, 163.8 395.4","t":"La probabilidad de un todo te parece menor que la suma de sus partes.","x":"Estimas más probable «falla de red, de servidor o de código» por separado que «falla técnica» en general."},{"n":"Denomination effect","e":"Efecto de denominación","s":"denomination-effect","u":"https://en.wikipedia.org/wiki/Denomination_effect","a":69.2,"d":"M124.3 255.3 C 155.8 320.1, 126.2 332.9, 151.8 400.2","t":"Gastas más fácil en monedas sueltas que rompiendo un billete grande.","x":"Gastas sin pensar las monedas del bolsillo, pero evitas romper el billete de veinte mil."},{"n":"The magical number 7 ± 2","e":"El número mágico 7 ± 2","s":"the-magical-number-7-2","u":"https://en.wikipedia.org/wiki/The_Magical_Number_Seven,_Plus_or_Minus_Two","a":71.0,"d":"M124.3 255.3 C 155.8 320.1, 116.1 336.5, 139.6 404.6","t":"Tu memoria de trabajo retiene unos pocos elementos a la vez.","x":"Te dictan un número de ocho dígitos y pierdes los últimos tres antes de alcanzar a anotarlo."}]},{"en":"We think we know what other people are thinking","es":"Creemos saber lo que están pensando los demás","d":"M90.1 109.8 C 135.1 164.7, 41.6 208.9, 55.4 278.5","cx":122.9,"cy":617.9,"b":[{"n":"Illusion of transparency","e":"Ilusión de transparencia","s":"illusion-of-transparency","u":"https://en.wikipedia.org/wiki/Illusion_of_transparency","a":74.4,"d":"M55.4 278.5 C 69.5 349.2, 95.6 342.9, 114.9 412.3","t":"Crees que los demás notan tus emociones internas más de lo que realmente notan.","x":"Crees que toda la sala nota lo nervioso que estás exponiendo; nadie lo nota."},{"n":"Curse of knowledge","e":"Maldición del conocimiento","s":"curse-of-knowledge","u":"https://en.wikipedia.org/wiki/Curse_of_knowledge","a":76.2,"d":"M55.4 278.5 C 69.5 349.2, 85.2 345.7, 102.4 415.6","t":"Quien sabe algo no puede imaginar cómo se piensa sin saberlo.","x":"Explicas tu trabajo con siglas que para ti son obvias y la sala se pierde en el primer minuto."},{"n":"Spotlight effect","e":"Efecto reflector","s":"spotlight-effect","u":"https://en.wikipedia.org/wiki/Spotlight_effect","a":77.9,"d":"M55.4 278.5 C 69.5 349.2, 74.7 348.1, 89.8 418.5","t":"Sobreestimas cuánto te están mirando y juzgando los demás.","x":"Pasas toda la fiesta incómodo por una mancha en la camisa que nadie vio."},{"n":"Extrinsic incentive error","e":"Error del incentivo extrínseco","s":"extrinsic-incentive-error","u":"https://en.wikipedia.org/wiki/Extrinsic_incentives_bias","a":79.6,"d":"M55.4 278.5 C 69.5 349.2, 64.2 350.2, 77.1 421.0","t":"Crees que a los demás los mueve la plata y a ti el propósito.","x":"Crees que tu equipo se queda por el sueldo y que tú te quedas por el propósito."},{"n":"Illusion of external agency","e":"Ilusión de agencia externa","s":"illusion-of-external-agency","u":"https://en.wikipedia.org/wiki/Illusion_of_external_agency","a":81.3,"d":"M55.4 278.5 C 69.5 349.2, 53.6 351.9, 64.4 423.1","t":"Atribuyes a fuerzas externas resultados que tu propia mente produjo.","x":"Atribuyes a una señal del destino una decisión que venías tomando hace semanas."},{"n":"Illusion of asymmetric insight","e":"Perspicacia asimétrica","s":"illusion-of-asymmetric-insight","u":"https://en.wikipedia.org/wiki/Illusion_of_asymmetric_insight","a":83.1,"d":"M55.4 278.5 C 69.5 349.2, 42.9 353.4, 51.6 424.9","t":"Crees conocer a los otros mejor de lo que ellos te conocen a ti.","x":"Sientes que lees a tu pareja como un libro abierto y que ella no te entiende a ti."}]},{"en":"We project our current mindset and assumptions onto the past and future","es":"Proyectamos nuestra mentalidad actual sobre el pasado y el futuro","d":"M90.1 109.8 C 135.1 164.7, -28.9 211.0, -38.5 281.4","cx":-85.4,"cy":624.2,"b":[{"n":"Telescoping effect","e":"Efecto telescopio","s":"telescoping-effect","u":"https://en.wikipedia.org/wiki/Telescoping_effect","a":86.5,"d":"M-38.5 281.4 C -48.2 352.7, 21.5 355.4, 25.8 427.2","t":"Sientes los eventos recientes más lejanos y los remotos más cercanos de lo que son.","x":"Jurarías que ese concierto fue hace dos años y fueron siete."},{"n":"Rosy retrospection","e":"Retrospectiva idealizada","s":"rosy-retrospection","u":"https://en.wikipedia.org/wiki/Rosy_retrospection","a":88.3,"d":"M-38.5 281.4 C -48.2 352.7, 10.8 355.8, 12.9 427.8","t":"Recuerdas el pasado mejor de lo que lo viviste en su momento.","x":"Recuerdas el viaje como perfecto y se te borran los tres días de lluvia y la pelea del último día."},{"n":"Hindsight bias","e":"Sesgo retrospectivo","s":"hindsight-bias","u":"https://en.wikipedia.org/wiki/Hindsight_bias","a":90.0,"d":"M-38.5 281.4 C -48.2 352.7, -0.0 356.0, -0.0 428.0","t":"Una vez conoces el resultado, te parece que era obvio desde el principio.","x":"Terminado el partido, todos sabían que ese cambio iba a fallar."},{"n":"Outcome bias","e":"Sesgo de resultado","s":"outcome-bias","u":"https://en.wikipedia.org/wiki/Outcome_bias","a":91.7,"d":"M-38.5 281.4 C -48.2 352.7, -10.8 355.8, -12.9 427.8","t":"Juzgas la calidad de una decisión por su resultado y no por su lógica.","x":"Alguien maneja habiendo bebido y llega bien: lo juzgas mucho menos que a quien chocó haciendo lo mismo."},{"n":"Moral luck","e":"Suerte moral","s":"moral-luck","u":"https://en.wikipedia.org/wiki/Moral_luck","a":93.5,"d":"M-38.5 281.4 C -48.2 352.7, -21.5 355.4, -25.8 427.2","t":"Asignas culpa o mérito según cómo salió, no según lo que se controlaba.","x":"Dos personas mandan el mismo mensaje imprudente; solo condenas a aquella a quien se le filtró."},{"n":"Declinism","e":"Declinismo","s":"declinism","u":"https://en.wikipedia.org/wiki/Declinism","a":95.2,"d":"M-38.5 281.4 C -48.2 352.7, -32.2 354.5, -38.7 426.2","t":"Idealizas el pasado y asumes que todo va en decadencia.","x":"«La música de antes sí era buena», dicho puntualmente por cada generación."},{"n":"Impact bias","e":"Sesgo de impacto","s":"impact-bias","u":"https://en.wikipedia.org/wiki/Impact_bias","a":96.9,"d":"M-38.5 281.4 C -48.2 352.7, -42.9 353.4, -51.6 424.9","t":"Sobreestimas cuánto y por cuánto tiempo te afectará un evento futuro.","x":"Crees que el ascenso te tendrá feliz todo el año; a las tres semanas ya es la nueva normalidad."},{"n":"Pessimism bias","e":"Sesgo de pesimismo","s":"pessimism-bias","u":"https://en.wikipedia.org/wiki/Optimism_bias#Pessimism_bias","a":98.7,"d":"M-38.5 281.4 C -48.2 352.7, -53.6 351.9, -64.4 423.1","t":"Sobreestimas la probabilidad de que te ocurran cosas malas.","x":"Das por perdida la entrevista aunque cumples todos los requisitos del cargo."},{"n":"Planning fallacy","e":"Falacia de planificación","s":"planning-fallacy","u":"https://en.wikipedia.org/wiki/Planning_fallacy","a":100.4,"d":"M-38.5 281.4 C -48.2 352.7, -64.2 350.2, -77.1 421.0","t":"Subestimas sistemáticamente el tiempo y costo de tus propios proyectos.","x":"Dijiste «dos semanas» y van once; igual estimas dos semanas para el módulo siguiente."},{"n":"Time–saving bias","e":"Sesgo de ahorro de tiempo","s":"timesaving-bias","u":"https://en.wikipedia.org/wiki/Time-saving_bias","a":102.1,"d":"M-38.5 281.4 C -48.2 352.7, -74.7 348.1, -89.8 418.5","t":"Calculas mal el tiempo que realmente ganas al aumentar la velocidad.","x":"Aceleras de 100 a 120 en la carretera creyendo que ganas media hora; ganas ocho minutos."},{"n":"Pro–innovation bias","e":"Sesgo pro-innovación","s":"proinnovation-bias","u":"https://en.wikipedia.org/wiki/Pro-innovation_bias","a":103.8,"d":"M-38.5 281.4 C -48.2 352.7, -85.2 345.7, -102.4 415.6","t":"Sobrevaloras una innovación e ignoras sus limitaciones y costos de adopción.","x":"Migras al equipo entero a la herramienta nueva sin contar las semanas que tomará aprenderla."},{"n":"Projection bias","e":"Sesgo de proyección","s":"projection-bias","u":"https://en.wikipedia.org/wiki/Affective_forecasting#Projection_bias","a":105.6,"d":"M-38.5 281.4 C -48.2 352.7, -95.6 342.9, -114.9 412.3","t":"Asumes que tu yo futuro querrá y sentirá lo mismo que tu yo de ahora.","x":"Compras entradas para dentro de seis meses suponiendo que ese sábado tendrás las mismas ganas."},{"n":"Restraint bias","e":"Sesgo de autocontrol","s":"restraint-bias","u":"https://en.wikipedia.org/wiki/Restraint_bias","a":107.3,"d":"M-38.5 281.4 C -48.2 352.7, -105.9 339.9, -127.3 408.6","t":"Sobreestimas tu capacidad de controlar impulsos ante la tentación real.","x":"Dejas las galletas a la vista, seguro de que vas a poder ignorarlas."},{"n":"Self–consistency bias","e":"Sesgo de autoconsistencia","s":"selfconsistency-bias","u":"https://en.wikipedia.org/wiki/List_of_cognitive_biases#Consistency_bias","a":109.0,"d":"M-38.5 281.4 C -48.2 352.7, -116.1 336.5, -139.6 404.6","t":"Recuerdas tus actitudes pasadas como más parecidas a las actuales de lo que fueron.","x":"Juras que siempre pensaste así de ese tema, aunque hace cinco años defendías lo contrario."}]}]},{"en":"Need To Act Fast","es":"Necesidad de actuar rápido","c":[{"en":"To act, we must be confident we can make an impact and feel what we do is important","es":"Para actuar necesitamos creer que tenemos impacto y que lo que hacemos importa","d":"M-137.3 36.1 C -206.0 54.1, -136.4 163.6, -181.8 218.2","cx":-403.3,"cy":484.0,"b":[{"n":"Overconfidence effect","e":"Exceso de confianza","s":"overconfidence-effect","u":"https://en.wikipedia.org/wiki/Overconfidence_effect","a":112.5,"d":"M-181.8 218.2 C -227.9 273.5, -136.2 328.9, -163.8 395.4","t":"Tu certeza subjetiva supera consistentemente tu precisión objetiva.","x":"Entregas estimaciones «con 90% de certeza» y aciertas la mitad de las veces."},{"n":"Social desirability bias","e":"Sesgo de deseabilidad social","s":"social-desirability-bias","u":"https://en.wikipedia.org/wiki/Social_desirability_bias","a":114.2,"d":"M-181.8 218.2 C -227.9 273.5, -146.1 324.6, -175.7 390.3","t":"Respondes lo que queda bien, no lo que realmente haces o piensas.","x":"En la encuesta de clima marcas que todo va bien porque alguien podría identificarte."},{"n":"Third–person effect","e":"Efecto de tercera persona","s":"thirdperson-effect","u":"https://en.wikipedia.org/wiki/Third-person_effect","a":116.0,"d":"M-181.8 218.2 C -227.9 273.5, -155.8 320.1, -187.4 384.8","t":"Crees que la publicidad y los medios influyen en otros, no en ti.","x":"Crees que la publicidad manipula a los demás y que a ti no te hace nada."},{"n":"False consensus effect","e":"Efecto de falso consenso","s":"false-consensus-effect","u":"https://en.wikipedia.org/wiki/False_consensus_effect","a":117.7,"d":"M-181.8 218.2 C -227.9 273.5, -165.4 315.2, -198.9 379.0","t":"Sobreestimas cuánta gente comparte tus opiniones y hábitos.","x":"Supones que al equipo entero le acomodan las reuniones a las nueve porque a ti te acomodan."},{"n":"Hard–easy effect","e":"Efecto fácil-difícil","s":"hardeasy-effect","u":"https://en.wikipedia.org/wiki/Hard–easy_effect","a":119.4,"d":"M-181.8 218.2 C -227.9 273.5, -174.9 310.1, -210.3 372.8","t":"Te sobreestimas en tareas difíciles y te subestimas en las fáciles.","x":"Te crees capaz de aprender japonés en un año y dudas de poder armar un mueble."},{"n":"Lake Wobegone effect","e":"Efecto Lake Wobegon","s":"lake-wobegone-effect","u":"https://en.wikipedia.org/wiki/Lake_Wobegon#The_Lake_Wobegon_effect","a":121.2,"d":"M-181.8 218.2 C -227.9 273.5, -184.2 304.7, -221.4 366.3","t":"Casi todos se creen por sobre el promedio, lo cual es imposible.","x":"Encuestas la oficina y el 80% dice estar sobre el promedio del equipo."},{"n":"Dunning–Kruger effect","e":"Efecto Dunning–Kruger","s":"dunningkruger-effect","u":"https://en.wikipedia.org/wiki/Dunning–Kruger_effect","a":122.9,"d":"M-181.8 218.2 C -227.9 273.5, -193.3 299.0, -232.4 359.4","t":"Poca competencia impide ver la propia incompetencia.","x":"Terminas el primer curso de estadística y sientes que podrías auditar cualquier estudio."},{"n":"Egocentric bias","e":"Sesgo egocéntrico","s":"egocentric-bias","u":"https://en.wikipedia.org/wiki/Egocentric_bias","a":124.6,"d":"M-181.8 218.2 C -227.9 273.5, -202.2 293.0, -243.1 352.2","t":"Recuerdas tu aporte en algo colectivo como mayor de lo que fue.","x":"Al recordar el proyecto, cada integrante cree haber aportado más de la mitad."},{"n":"Optimism bias","e":"Sesgo de optimismo","s":"optimism-bias","u":"https://en.wikipedia.org/wiki/Optimism_bias","a":126.3,"d":"M-181.8 218.2 C -227.9 273.5, -211.0 286.7, -253.7 344.7","t":"Crees que a ti te irá mejor que al promedio de la gente.","x":"Sabes que un tercio de los emprendimientos cierra el primer año y estás seguro de que el tuyo no."},{"n":"Forer effect","e":"Efecto Forer","s":"forer-effect","u":"https://en.wikipedia.org/wiki/Barnum_effect","a":128.1,"d":"M-181.8 218.2 C -227.9 273.5, -219.6 280.2, -264.0 336.9","t":"Aceptas descripciones genéricas de personalidad como si fueran personales.","x":"El test de personalidad de internet te describe «tal cual», igual que a los otros diez millones que lo hicieron."},{"n":"Barnum effect","e":"Efecto Barnum","s":"barnum-effect","u":"https://en.wikipedia.org/wiki/Barnum_effect","a":129.8,"d":"M-181.8 218.2 C -227.9 273.5, -227.9 273.5, -274.0 328.8","t":"Otro nombre del efecto Forer: lo vago te suena hecho a tu medida.","x":"«Eres sociable pero valoras tu tiempo a solas»: te suena escrito especialmente para ti."},{"n":"Self–serving bias","e":"Sesgo de autoservicio","s":"selfserving-bias","u":"https://en.wikipedia.org/wiki/Self-serving_bias","a":131.5,"d":"M-181.8 218.2 C -227.9 273.5, -236.1 266.5, -283.8 320.4","t":"Te atribuyes los éxitos y culpas a lo externo por los fracasos.","x":"La venta cerrada fue por tu trabajo; la perdida, por el precio que fijó la empresa."},{"n":"Actor–observer bias","e":"Sesgo actor-observador","s":"actorobserver-bias","u":"https://en.wikipedia.org/wiki/Actor–observer_asymmetry#bias","a":133.3,"d":"M-181.8 218.2 C -227.9 273.5, -244.0 259.2, -293.4 311.6","t":"Explicas tus actos por el contexto y los ajenos por su personalidad.","x":"Tú llegaste tarde por el tráfico; tu colega llega tarde porque es desordenado."},{"n":"Illusion of control","e":"Ilusión de control","s":"illusion-of-control","u":"https://en.wikipedia.org/wiki/Illusion_of_control","a":135.0,"d":"M-181.8 218.2 C -227.9 273.5, -251.7 251.7, -302.6 302.6","t":"Crees influir en resultados que en realidad son azarosos.","x":"Soplas los dados antes de tirarlos."},{"n":"Illusory superiority","e":"Superioridad ilusoria","s":"illusory-superiority","u":"https://en.wikipedia.org/wiki/Illusory_superiority","a":136.7,"d":"M-181.8 218.2 C -227.9 273.5, -259.2 244.0, -311.6 293.4","t":"Te evalúas por encima del promedio en casi cualquier cualidad.","x":"Más del 90% de los conductores se considera mejor que el promedio."},{"n":"Fundamental attribution error","e":"Error fundamental de atribución","s":"fundamental-attribution-error","u":"https://en.wikipedia.org/wiki/Fundamental_attribution_error","a":138.5,"d":"M-181.8 218.2 C -227.9 273.5, -266.5 236.1, -320.4 283.8","t":"Atribuyes la conducta ajena a su carácter y subestimas la situación.","x":"El mozo te atendió cortante y lo tildas de antipático, sin ver que está solo con veinte mesas."},{"n":"Defensive attribution hypothesis","e":"Atribución defensiva","s":"defensive-attribution-hypothesis","u":"https://en.wikipedia.org/wiki/Defensive_attribution_hypothesis","a":140.2,"d":"M-181.8 218.2 C -227.9 273.5, -273.5 227.9, -328.8 274.0","t":"Culpas más a la víctima cuanto más te amenaza parecerte a ella.","x":"Te enteras de un robo en un barrio parecido al tuyo y concluyes que esa persona se descuidó."},{"n":"Trait ascription bias","e":"Atribución de rasgos","s":"trait-ascription-bias","u":"https://en.wikipedia.org/wiki/Trait_ascription_bias","a":141.9,"d":"M-181.8 218.2 C -227.9 273.5, -280.2 219.6, -336.9 264.0","t":"Te ves variable según el contexto y a los demás como predecibles y fijos.","x":"Te describes como «depende de la situación» y a tu jefe como «siempre igual»."},{"n":"Effort justification","e":"Justificación del esfuerzo","s":"effort-justification","u":"https://en.wikipedia.org/wiki/Effort_justification","a":143.7,"d":"M-181.8 218.2 C -227.9 273.5, -286.7 211.0, -344.7 253.7","t":"Valoras más aquello que te costó más esfuerzo conseguir.","x":"Defiendes con uñas y dientes el proceso de selección larguísimo por el que pasaste para entrar."},{"n":"Risk compensation","e":"Compensación de riesgo","s":"risk-compensation","u":"https://en.wikipedia.org/wiki/Risk_compensation","a":145.4,"d":"M-181.8 218.2 C -227.9 273.5, -293.0 202.2, -352.2 243.1","t":"Con más seguridad disponible, asumes más riesgo y el saldo se anula.","x":"Con casco andas más rápido en bicicleta de lo que andarías sin él."},{"n":"Peltzman effect","e":"Efecto Peltzman","s":"peltzman-effect","u":"https://en.wikipedia.org/wiki/Risk_compensation#Peltzman_effect","a":147.1,"d":"M-181.8 218.2 C -227.9 273.5, -299.0 193.3, -359.4 232.4","t":"Las normas de seguridad inducen conductas más riesgosas que compensan el beneficio.","x":"Los frenos ABS llevaron a mucha gente a frenar más tarde, y el beneficio se diluyó."}]},{"en":"To stay focused, we favor the immediate, relatable thing in front of us","es":"Para mantener el foco, preferimos lo inmediato y cercano","d":"M-137.3 36.1 C -206.0 54.1, -188.6 99.0, -251.5 132.0","cx":-557.8,"cy":292.8,"b":[{"n":"Hyperbolic discounting","e":"Descuento hiperbólico","s":"hyperbolic-discounting","u":"https://en.wikipedia.org/wiki/Hyperbolic_discounting","a":150.6,"d":"M-251.5 132.0 C -315.2 165.4, -310.1 174.9, -372.8 210.3","t":"Prefieres una recompensa menor ahora antes que una mayor después.","x":"Prefieres $50.000 hoy antes que $60.000 el próximo mes."},{"n":"Appeal to novelty","e":"Apelación a la novedad","s":"appeal-to-novelty","u":"https://en.wikipedia.org/wiki/Appeal_to_novelty","a":152.3,"d":"M-251.5 132.0 C -315.2 165.4, -315.2 165.4, -379.0 198.9","t":"Asumes que lo más nuevo es, por eso mismo, mejor.","x":"Cambias de framework porque salió uno nuevo, no porque el actual te quede chico."},{"n":"Identifiable victim effect","e":"Efecto de la víctima identificable","s":"identifiable-victim-effect","u":"https://en.wikipedia.org/wiki/Identifiable_victim_effect","a":154.0,"d":"M-251.5 132.0 C -315.2 165.4, -320.1 155.8, -384.8 187.4","t":"Te mueve mucho más una víctima con nombre que una estadística.","x":"Donas a la campaña del niño con nombre y foto, no a la que menciona cien mil casos."}]},{"en":"To get things done, we tend to complete things we've invested time and energy in","es":"Para terminar, tendemos a completar aquello en lo que ya invertimos","d":"M-137.3 36.1 C -206.0 54.1, -208.3 44.7, -277.7 59.6","cx":-616.0,"cy":132.2,"b":[{"n":"Sunk cost fallacy","e":"Falacia del costo hundido","s":"sunk-cost-fallacy","u":"https://en.wikipedia.org/wiki/Sunk_cost#Loss_aversion_and_the_sunk_cost_fallacy","a":157.5,"d":"M-277.7 59.6 C -348.1 74.7, -328.9 136.2, -395.4 163.8","t":"Sigues invirtiendo por lo ya gastado, que es irrecuperable.","x":"Llevas media hora en una película mala y te quedas «porque ya pagaste la entrada»."},{"n":"Irrational escalation","e":"Escalada irracional","s":"irrational-escalation","u":"https://en.wikipedia.org/wiki/Escalation_of_commitment","a":159.2,"d":"M-277.7 59.6 C -348.1 74.7, -332.9 126.2, -400.2 151.8","t":"Aumentas la apuesta para justificar las decisiones previas que fallaron.","x":"La subasta ya pasó el valor del objeto y sigues pujando para no perder lo que llevas ofrecido."},{"n":"Escalation of commitment","e":"Escalada del compromiso","s":"escalation-of-commitment","u":"https://en.wikipedia.org/wiki/Escalation_of_commitment","a":161.0,"d":"M-277.7 59.6 C -348.1 74.7, -336.5 116.1, -404.6 139.6","t":"Doblas la apuesta en un curso de acción que ya muestra malos resultados.","x":"El proyecto lleva un año sin resultados y el comité aprueba más presupuesto para «darle una oportunidad»."},{"n":"Generation effect","e":"Efecto de generación","s":"generation-effect","u":"https://en.wikipedia.org/wiki/Generation_effect","a":162.7,"d":"M-277.7 59.6 C -348.1 74.7, -339.9 105.9, -408.6 127.3","t":"Recuerdas mejor lo que produjiste tú que lo que solo leíste.","x":"Recuerdas mejor el idioma cuando armas frases propias que cuando lees la lista de vocabulario."},{"n":"Loss aversion","e":"Aversión a la pérdida","s":"loss-aversion","u":"https://en.wikipedia.org/wiki/Loss_aversion","a":164.4,"d":"M-277.7 59.6 C -348.1 74.7, -342.9 95.6, -412.3 114.9","t":"Perder $100 duele más de lo que alegra ganar $100.","x":"Te amarga más perder $20.000 en la calle de lo que te alegra encontrártelos."},{"n":"IKEA effect","e":"Efecto IKEA","s":"ikea-effect","u":"https://en.wikipedia.org/wiki/IKEA_effect","a":166.2,"d":"M-277.7 59.6 C -348.1 74.7, -345.7 85.2, -415.6 102.4","t":"Valoras más lo que armaste con tus propias manos.","x":"El mueble que armaste cojea, pero no lo cambias por nada."},{"n":"Unit bias","e":"Sesgo de unidad","s":"unit-bias","u":"https://en.wikipedia.org/wiki/List_of_cognitive_biases","a":167.9,"d":"M-277.7 59.6 C -348.1 74.7, -348.1 74.7, -418.5 89.8","t":"Asumes que una unidad servida es la porción correcta a consumir.","x":"Te comes el paquete entero porque venía en un solo envase, sea del tamaño que sea."},{"n":"Zero–risk bias","e":"Sesgo de riesgo cero","s":"zerorisk-bias","u":"https://en.wikipedia.org/wiki/Zero-risk_bias","a":169.6,"d":"M-277.7 59.6 C -348.1 74.7, -350.2 64.2, -421.0 77.1","t":"Prefieres eliminar un riesgo pequeño por completo antes que reducir mucho uno grande.","x":"Prefieres eliminar del todo un riesgo que afecta al 1% antes que reducir a la mitad uno que afecta al 40%."},{"n":"Disposition effect","e":"Efecto disposición","s":"disposition-effect","u":"https://en.wikipedia.org/wiki/Disposition_effect","a":171.3,"d":"M-277.7 59.6 C -348.1 74.7, -351.9 53.6, -423.1 64.4","t":"Vendes lo que sube y retienes lo que baja, al revés de lo racional.","x":"Vendes la acción que subió 10% y te quedas con la que cayó 40% esperando que «vuelva»."},{"n":"Pseudocertainty effect","e":"Efecto de pseudocerteza","s":"pseudocertainty-effect","u":"https://en.wikipedia.org/wiki/Pseudocertainty_effect","a":173.1,"d":"M-277.7 59.6 C -348.1 74.7, -353.4 42.9, -424.9 51.6","t":"Evitas riesgo si el marco es de ganancia y lo buscas si es de pérdida.","x":"Aceptas el seguro cuando te lo presentan como una ganancia y lo rechazas cuando lo plantean como pérdida."},{"n":"Processing difficulty effect","e":"Dificultad de procesamiento","s":"processing-difficulty-effect","u":"https://en.wikipedia.org/wiki/List_of_cognitive_biases#Processing_difficulty_effect","a":174.8,"d":"M-277.7 59.6 C -348.1 74.7, -354.5 32.2, -426.2 38.7","t":"Lo que cuesta más procesar se recuerda mejor después.","x":"Recuerdas mejor los apuntes escritos a mano, que te costaron más que copiar y pegar."},{"n":"Endowment effect","e":"Efecto dotación","s":"endowment-effect","u":"https://en.wikipedia.org/wiki/Endowment_effect","a":176.5,"d":"M-277.7 59.6 C -348.1 74.7, -355.4 21.5, -427.2 25.8","t":"Exiges más por algo solo porque ya es tuyo.","x":"Pides $300.000 por la bicicleta que no usas y que no pagarías ni a $150.000."},{"n":"Backfire effect","e":"Efecto contraproducente","s":"backfire-effect","u":"https://en.wikipedia.org/wiki/Confirmation_bias#backfire_effect","a":178.3,"d":"M-277.7 59.6 C -348.1 74.7, -355.8 10.8, -427.8 12.9","t":"La evidencia que te contradice refuerza aún más tu creencia original.","x":"Le muestras los datos a alguien y queda más convencido de lo contrario que antes de verlos."}]},{"en":"To avoid mistakes, we aim to preserve autonomy and group status, and avoid irreversible decisions","es":"Para no equivocarnos, preservamos autonomía y estatus y evitamos lo irreversible","d":"M-137.3 36.1 C -206.0 54.1, -211.8 -22.5, -282.4 -30.0","cx":-626.5,"cy":-66.5,"b":[{"n":"System justification","e":"Justificación del sistema","s":"system-justification","u":"https://en.wikipedia.org/wiki/System_justification","a":181.7,"d":"M-282.4 -30.0 C -354.0 -37.6, -355.8 -10.8, -427.8 -12.9","t":"Defiendes el statu quo aunque te perjudique, porque es lo conocido.","x":"Defiendes el proceso de compras que te hace perder dos semanas «porque siempre ha sido así»."},{"n":"Reverse psychology","e":"Psicología inversa","s":"reverse-psychology","u":"https://en.wikipedia.org/wiki/Reverse_psychology","a":183.5,"d":"M-282.4 -30.0 C -354.0 -37.6, -355.4 -21.5, -427.2 -25.8","t":"Pedir lo contrario de lo que quieres aprovecha el impulso de resistirse.","x":"Le dices a tu hijo que no se tome la sopa y se la toma."},{"n":"Reactance","e":"Reactancia","s":"reactance","u":"https://en.wikipedia.org/wiki/Reactance_(psychology)","a":185.2,"d":"M-282.4 -30.0 C -354.0 -37.6, -354.5 -32.2, -426.2 -38.7","t":"Cuando limitan tu libertad, quieres justo lo prohibido.","x":"Ponen un cartel de «prohibido tocar» y lo primero que quieres es tocar."},{"n":"Decoy effect","e":"Efecto señuelo","s":"decoy-effect","u":"https://en.wikipedia.org/wiki/Decoy_effect","a":186.9,"d":"M-282.4 -30.0 C -354.0 -37.6, -353.4 -42.9, -424.9 -51.6","t":"Una tercera opción inferior cambia cuál de las otras dos eliges.","x":"El balde de palomitas mediano existe para que el grande te parezca barato."},{"n":"Social comparison effect","e":"Comparación social","s":"social-comparison-effect","u":"https://en.wikipedia.org/wiki/Social_comparison_bias","a":188.7,"d":"M-282.4 -30.0 C -354.0 -37.6, -351.9 -53.6, -423.1 -64.4","t":"Evalúas tu situación mirando a los demás y no en términos absolutos.","x":"Te subieron el sueldo y te alegraste, hasta que supiste cuánto le subieron al de al lado."},{"n":"Status quo bias","e":"Sesgo del statu quo","s":"status-quo-bias","u":"https://en.wikipedia.org/wiki/Status_quo_bias","a":190.4,"d":"M-282.4 -30.0 C -354.0 -37.6, -350.2 -64.2, -421.0 -77.1","t":"Prefieres que todo siga igual aunque cambiar sea mejor.","x":"Sigues en el mismo plan de celular hace seis años aunque hay uno mejor y más barato."}]},{"en":"We favor simple–looking options and complete information over complex, ambiguous options","es":"Preferimos lo simple y completo por sobre lo complejo y ambiguo","d":"M-137.3 36.1 C -206.0 54.1, -199.2 -75.5, -265.5 -100.7","cx":-589.1,"cy":-223.4,"b":[{"n":"Ambiguity bias","e":"Aversión a la ambigüedad","s":"ambiguity-bias","u":"https://en.wikipedia.org/wiki/Ambiguity_effect","a":193.8,"d":"M-265.5 -100.7 C -332.9 -126.2, -345.7 -85.2, -415.6 -102.4","t":"Evitas la opción cuya probabilidad desconoces, aunque pueda ser mejor.","x":"Eliges el fondo conservador porque entiendes su riesgo, y descartas el otro por no entenderlo."},{"n":"Information bias","e":"Sesgo de información","s":"information-bias","u":"https://en.wikipedia.org/wiki/Information_bias_(psychology)","a":195.6,"d":"M-265.5 -100.7 C -332.9 -126.2, -342.9 -95.6, -412.3 -114.9","t":"Buscas más datos aunque no puedan cambiar tu decisión.","x":"Pides un estudio más antes de decidir, aunque cualquier resultado llevaría a la misma decisión."},{"n":"Belief bias","e":"Sesgo de creencia","s":"belief-bias","u":"https://en.wikipedia.org/wiki/Belief_bias","a":197.3,"d":"M-265.5 -100.7 C -332.9 -126.2, -339.9 -105.9, -408.6 -127.3","t":"Juzgas si un argumento es válido según si su conclusión te parece creíble.","x":"Das por válido un argumento flojo porque su conclusión te gusta."},{"n":"Rhyme–as–reason effect","e":"Efecto rima-como-razón","s":"rhymeasreason-effect","u":"https://en.wikipedia.org/wiki/Rhyme-as-reason_effect","a":199.0,"d":"M-265.5 -100.7 C -332.9 -126.2, -336.5 -116.1, -404.6 -139.6","t":"Una frase que rima te suena más verdadera.","x":"«Al que madruga, Dios lo ayuda» te suena más cierto que la misma idea dicha sin rima."},{"n":"Bike–shedding effect","e":"Efecto del cobertizo de bicicletas","s":"bikeshedding-effect","u":"https://en.wikipedia.org/wiki/Law_of_triviality","a":200.8,"d":"M-265.5 -100.7 C -332.9 -126.2, -332.9 -126.2, -400.2 -151.8","t":"El grupo debate lo trivial y aprueba lo complejo sin discusión.","x":"La reunión aprueba la arquitectura en cinco minutos y discute cuarenta el color del botón."},{"n":"Law of Triviality","e":"Ley de la trivialidad","s":"law-of-triviality","u":"https://en.wikipedia.org/wiki/Law_of_triviality","a":202.5,"d":"M-265.5 -100.7 C -332.9 -126.2, -328.9 -136.2, -395.4 -163.8","t":"El tiempo dedicado a un tema es inversamente proporcional a su importancia.","x":"El comité debate largo el estacionamiento de bicicletas y aprueba el reactor sin preguntas."},{"n":"Conjunction fallacy","e":"Falacia de conjunción","s":"conjunction-fallacy","u":"https://en.wikipedia.org/wiki/Conjunction_fallacy","a":204.2,"d":"M-265.5 -100.7 C -332.9 -126.2, -324.6 -146.1, -390.3 -175.7","t":"Crees que lo específico y detallado es más probable que lo general.","x":"Te parece más probable «contador que corre maratones» que simplemente «contador»."},{"n":"Occam's razor","e":"Navaja de Occam","s":"occam-s-razor","u":"https://en.wikipedia.org/wiki/Occam's_razor","a":206.0,"d":"M-265.5 -100.7 C -332.9 -126.2, -320.1 -155.8, -384.8 -187.4","t":"Prefieres la explicación con menos supuestos, a veces de más.","x":"Explicas la demora por un atochamiento antes que por una conspiración del equipo."},{"n":"Less–is–better effect","e":"Efecto de «menos es mejor»","s":"lessisbetter-effect","u":"https://en.wikipedia.org/wiki/Less-is-better_effect","a":207.7,"d":"M-265.5 -100.7 C -332.9 -126.2, -315.2 -165.4, -379.0 -198.9","t":"Por separado valoras más el conjunto pequeño; comparados, eliges el grande.","x":"Un chaleco de $30.000 parece mejor regalo que un abrigo de $50.000 que estaba en oferta."}]}]},{"en":"What Should We Remember?","es":"¿Qué deberíamos recordar?","c":[{"en":"We edit and reinforce some memories after the fact","es":"Editamos y reforzamos algunos recuerdos después del hecho","d":"M-71.6 -122.6 C -107.4 -183.9, -173.4 -123.6, -231.3 -164.8","cx":-513.0,"cy":-365.7,"b":[{"n":"Misattribution of memory","e":"Atribución errónea de la memoria","s":"misattribution-of-memory","u":"https://en.wikipedia.org/wiki/Misattribution_of_memory","a":211.2,"d":"M-231.3 -164.8 C -289.9 -206.6, -304.7 -184.2, -366.3 -221.4","t":"Recuerdas el contenido pero te equivocas en su origen.","x":"Le cuentas un chiste a quien te lo contó, convencido de que lo leíste en otra parte."},{"n":"Source confusion","e":"Confusión de la fuente","s":"source-confusion","u":"https://en.wikipedia.org/wiki/Misattribution_of_memory#Source_confusion","a":212.9,"d":"M-231.3 -164.8 C -289.9 -206.6, -299.0 -193.3, -359.4 -232.4","t":"Mezclas de dónde salió un recuerdo: lo vivido, lo leído, lo contado.","x":"Citas un dato como si fuera del informe y en realidad lo escuchaste en un podcast."},{"n":"Cryptomnesia","e":"Criptomnesia","s":"cryptomnesia","u":"https://en.wikipedia.org/wiki/Cryptomnesia","a":214.6,"d":"M-231.3 -164.8 C -289.9 -206.6, -293.0 -202.2, -352.2 -243.1","t":"Tomas un recuerdo olvidado por una idea original tuya.","x":"Propones una idea «propia» que en realidad escuchaste en una reunión hace meses."},{"n":"False memory","e":"Falso recuerdo","s":"false-memory","u":"https://en.wikipedia.org/wiki/False_memory","a":216.3,"d":"M-231.3 -164.8 C -289.9 -206.6, -286.7 -211.0, -344.7 -253.7","t":"Recuerdas con nitidez y convicción algo que no ocurrió.","x":"Recuerdas perfectamente dónde estabas ese día, y las fotos muestran que estabas en otra ciudad."},{"n":"Suggestibility","e":"Sugestionabilidad","s":"suggestibility","u":"https://en.wikipedia.org/wiki/Suggestibility","a":218.1,"d":"M-231.3 -164.8 C -289.9 -206.6, -280.2 -219.6, -336.9 -264.0","t":"Las ideas de otros se incorporan a tu recuerdo como si fueran propias.","x":"Te preguntan «¿viste el vidrio roto?» y empiezas a recordar un vidrio que nunca estuvo ahí."},{"n":"Spacing effect","e":"Efecto de espaciamiento","s":"spacing-effect","u":"https://en.wikipedia.org/wiki/Spacing_effect","a":219.8,"d":"M-231.3 -164.8 C -289.9 -206.6, -273.5 -227.9, -328.8 -274.0","t":"Aprendes más si distribuyes el estudio en el tiempo que si lo concentras.","x":"Cuatro sesiones de media hora repartidas en la semana te dejan más que una maratón de dos horas."}]},{"en":"We discard specifics to form generalities","es":"Descartamos lo específico para formar generalidades","d":"M-71.6 -122.6 C -107.4 -183.9, -143.6 -157.3, -191.5 -209.7","cx":-424.8,"cy":-465.2,"b":[{"n":"Implicit association","e":"Asociación implícita","s":"implicit-association","u":"https://en.wikipedia.org/wiki/Implicit_stereotype","a":223.3,"d":"M-191.5 -209.7 C -240.1 -262.9, -259.2 -244.0, -311.6 -293.4","t":"Vinculas conceptos de forma automática, fuera de tu control consciente.","x":"Asocias «director» con una voz grave sin haberlo decidido nunca."},{"n":"Implicit stereotypes","e":"Estereotipos implícitos","s":"implicit-stereotypes","u":"https://en.wikipedia.org/wiki/Implicit_stereotype","a":225.0,"d":"M-191.5 -209.7 C -240.1 -262.9, -251.7 -251.7, -302.6 -302.6","t":"Asociaciones automáticas sobre grupos que operan sin que lo decidas.","x":"Lees dos currículums idénticos y uno te parece más sólido por el nombre que lleva arriba."},{"n":"Stereotypical bias","e":"Sesgo estereotípico","s":"stereotypical-bias","u":"https://en.wikipedia.org/wiki/Implicit_stereotype","a":226.7,"d":"M-191.5 -209.7 C -240.1 -262.9, -244.0 -259.2, -293.4 -311.6","t":"Tu memoria distorsiona los detalles para que calcen con el estereotipo.","x":"Recuerdas que el médico era hombre y la enfermera mujer, aunque era exactamente al revés."},{"n":"Prejudice","e":"Prejuicio","s":"prejudice","u":"https://en.wikipedia.org/wiki/Prejudice","a":228.5,"d":"M-191.5 -209.7 C -240.1 -262.9, -236.1 -266.5, -283.8 -320.4","t":"Juicio previo sobre una persona basado en su pertenencia grupal.","x":"Decides si alguien te cae bien antes de que termine de presentarse."},{"n":"Negativity bias","e":"Sesgo de negatividad","s":"negativity-bias-2","u":"https://en.wikipedia.org/wiki/Negativity_bias","a":230.2,"d":"M-191.5 -209.7 C -240.1 -262.9, -227.9 -273.5, -274.0 -328.8","t":"Lo negativo pesa más que lo positivo de igual intensidad.","x":"Nueve comentarios buenos y uno malo sobre tu presentación: piensas todo el fin de semana en el malo."},{"n":"Fading affect bias","e":"Desvanecimiento afectivo","s":"fading-affect-bias","u":"https://en.wikipedia.org/wiki/Fading_affect_bias","a":231.9,"d":"M-191.5 -209.7 C -240.1 -262.9, -219.6 -280.2, -264.0 -336.9","t":"La emoción de los recuerdos malos se desvanece más rápido que la de los buenos.","x":"Hoy cuentas entre risas la mudanza que en su momento fue un desastre absoluto."}]},{"en":"We reduce events and lists to their key elements","es":"Reducimos eventos y listas a sus elementos clave","d":"M-71.6 -122.6 C -107.4 -183.9, -87.4 -194.2, -116.6 -259.0","cx":-258.6,"cy":-574.5,"b":[{"n":"Peak–end rule","e":"Regla del pico y el final","s":"peakend-rule","u":"https://en.wikipedia.org/wiki/Peak–end_rule","a":235.4,"d":"M-116.6 -259.0 C -146.1 -324.6, -202.2 -293.0, -243.1 -352.2","t":"Juzgas una experiencia por su momento más intenso y por su final.","x":"Un trámite de dos horas te queda como aceptable porque el funcionario del final fue amable."},{"n":"Leveling and sharpening","e":"Nivelación y agudización","s":"leveling-and-sharpening","u":"https://en.wikipedia.org/wiki/Leveling_and_sharpening","a":237.1,"d":"M-116.6 -259.0 C -146.1 -324.6, -193.3 -299.0, -232.4 -359.4","t":"Al recontar, nivelas los detalles menores y exageras los salientes.","x":"Cada vez que cuentas la anécdota el pez es más grande y los detalles aburridos desaparecen."},{"n":"Misinformation effect","e":"Efecto de desinformación","s":"misinformation-effect","u":"https://en.wikipedia.org/wiki/Misinformation_effect","a":238.8,"d":"M-116.6 -259.0 C -146.1 -324.6, -184.2 -304.7, -221.4 -366.3","t":"La información posterior al hecho altera tu recuerdo del hecho.","x":"Después de leer la noticia recuerdas un auto azul; en el momento viste uno blanco."},{"n":"Serial recall effect","e":"Efecto de recuerdo serial","s":"serial-recall-effect","u":"https://en.wikipedia.org/wiki/Recall_(memory)#Serial_recall","a":240.6,"d":"M-116.6 -259.0 C -146.1 -324.6, -174.9 -310.1, -210.3 -372.8","t":"Recuerdas mejor los elementos según su posición en la secuencia.","x":"De la lista del supermercado recuerdas la leche y el pan, nunca lo del medio."},{"n":"List–length effect","e":"Efecto de longitud de lista","s":"listlength-effect","u":"https://en.wikipedia.org/wiki/Recall_(memory)#Serial_recall","a":242.3,"d":"M-116.6 -259.0 C -146.1 -324.6, -165.4 -315.2, -198.9 -379.0","t":"Mientras más larga la lista, menor la proporción que logras recordar.","x":"De diez pendientes recuerdas ocho; de cuarenta, recuerdas doce."},{"n":"Duration neglect","e":"Desatención a la duración","s":"duration-neglect","u":"https://en.wikipedia.org/wiki/Duration_neglect","a":244.0,"d":"M-116.6 -259.0 C -146.1 -324.6, -155.8 -320.1, -187.4 -384.8","t":"Cuánto duró una experiencia casi no influye en cómo la recuerdas.","x":"La espera de cuarenta minutos y la de diez te dejan el mismo recuerdo si terminaron igual."},{"n":"Modality effect","e":"Efecto de modalidad","s":"modality-effect","u":"https://en.wikipedia.org/wiki/Modality_effect","a":245.8,"d":"M-116.6 -259.0 C -146.1 -324.6, -146.1 -324.6, -175.7 -390.3","t":"Los últimos ítems se recuerdan mejor si los escuchaste que si los leíste.","x":"Retienes mejor el último número de una serie si te lo dicen que si lo lees."},{"n":"Memory inhibition","e":"Inhibición de la memoria","s":"memory-inhibition","u":"https://en.wikipedia.org/wiki/Memory_inhibition","a":247.5,"d":"M-116.6 -259.0 C -146.1 -324.6, -136.2 -328.9, -163.8 -395.4","t":"Recuperar un recuerdo suprime activamente a los que compiten con él.","x":"Aprender el PIN nuevo hace que el anterior se te borre por completo."},{"n":"Primacy effect","e":"Efecto de primacía","s":"primacy-effect","u":"https://en.wikipedia.org/wiki/Serial-position_effect#Primacy_effect","a":249.2,"d":"M-116.6 -259.0 C -146.1 -324.6, -126.2 -332.9, -151.8 -400.2","t":"Los primeros elementos de una lista se recuerdan mejor.","x":"De la ronda de presentaciones recuerdas el nombre del primero."},{"n":"Recency effect","e":"Efecto de recencia","s":"recency-effect","u":"https://en.wikipedia.org/wiki/Serial-position_effect#Recency_effect","a":251.0,"d":"M-116.6 -259.0 C -146.1 -324.6, -116.1 -336.5, -139.6 -404.6","t":"Los últimos elementos de una lista se recuerdan mejor.","x":"Y también el del último, pero ninguno de los del medio."},{"n":"Part–set cueing effect","e":"Efecto de claves parciales","s":"partset-cueing-effect","u":"https://en.wikipedia.org/wiki/Memory_inhibition#Part-set_cuing_effect","a":252.7,"d":"M-116.6 -259.0 C -146.1 -324.6, -105.9 -339.9, -127.3 -408.6","t":"Recibir algunas pistas de un conjunto bloquea el recuerdo del resto.","x":"Te nombran tres países de la lista y recordar los que faltan se vuelve más difícil."},{"n":"Serial–position effect","e":"Efecto de posición serial","s":"serialposition-effect","u":"https://en.wikipedia.org/wiki/Serial-position_effect","a":254.4,"d":"M-116.6 -259.0 C -146.1 -324.6, -95.6 -342.9, -114.9 -412.3","t":"Recuerdas el principio y el final de una lista, y pierdes el medio.","x":"De diez candidatos, el que expuso al medio tiene menos chances solo por el orden."},{"n":"Suffix effect","e":"Efecto sufijo","s":"suffix-effect","u":"https://en.wikipedia.org/wiki/List_of_cognitive_biases#Suffix_effect","a":256.2,"d":"M-116.6 -259.0 C -146.1 -324.6, -85.2 -345.7, -102.4 -415.6","t":"Un sonido irrelevante al final arruina el recuerdo de los últimos ítems.","x":"Alguien dice «listo» justo al final del número de teléfono y pierdes los últimos dígitos."}]},{"en":"We store memories differently based on how they were experienced","es":"Guardamos los recuerdos según cómo fueron vividos","d":"M-71.6 -122.6 C -107.4 -183.9, -22.5 -211.8, -30.0 -282.4","cx":-66.5,"cy":-626.5,"b":[{"n":"Levels–of–processing effect","e":"Niveles de procesamiento","s":"levelsofprocessing-effect","u":"https://en.wikipedia.org/wiki/Levels-of-processing_effect","a":259.6,"d":"M-30.0 -282.4 C -37.6 -354.0, -64.2 -350.2, -77.1 -421.0","t":"Mientras más profundo el procesamiento, más durable el recuerdo.","x":"Entender por qué funciona una fórmula la fija mucho mejor que repetirla veinte veces."},{"n":"Absent–mindedness","e":"Despiste","s":"absentmindedness","u":"https://en.wikipedia.org/wiki/Absent-mindedness","a":261.3,"d":"M-30.0 -282.4 C -37.6 -354.0, -53.6 -351.9, -64.4 -423.1","t":"Fallas de memoria por atención dividida al momento de codificar.","x":"Dejas las llaves puestas en la puerta porque entraste hablando por teléfono."},{"n":"Testing effect","e":"Efecto de evaluación","s":"testing-effect","u":"https://en.wikipedia.org/wiki/Testing_effect","a":263.1,"d":"M-30.0 -282.4 C -37.6 -354.0, -42.9 -353.4, -51.6 -424.9","t":"Autoevaluarte fija el aprendizaje mejor que releer.","x":"Taparte la hoja y recitar fija más que releer el capítulo tres veces."},{"n":"Next–in–line effect","e":"Efecto del siguiente en turno","s":"nextinline-effect","u":"https://en.wikipedia.org/wiki/Next-in-line_effect","a":264.8,"d":"M-30.0 -282.4 C -37.6 -354.0, -32.2 -354.5, -38.7 -426.2","t":"No recuerdas lo que dijo quien habló justo antes de tu turno.","x":"Esperando tu turno para presentarte, no escuchas el nombre de quien habló justo antes."},{"n":"Google effect","e":"Efecto Google","s":"google-effect","u":"https://en.wikipedia.org/wiki/Google_effect","a":266.5,"d":"M-30.0 -282.4 C -37.6 -354.0, -21.5 -355.4, -25.8 -427.2","t":"Olvidas lo que sabes que puedes volver a buscar en internet.","x":"No recuerdas el dato, pero sí recuerdas con qué palabras buscarlo."},{"n":"Tip of the tongue phenomenon","e":"Fenómeno de la punta de la lengua","s":"tip-of-the-tongue-phenomenon","u":"https://en.wikipedia.org/wiki/Tip_of_the_tongue","a":268.3,"d":"M-30.0 -282.4 C -37.6 -354.0, -10.8 -355.8, -12.9 -427.8","t":"Sabes que sabes la palabra pero no logras recuperarla.","x":"Sabes que el actor es ese, le ves la cara clarísima, y el nombre no aparece."}]}]}];
+
+
+(function(){
+  var TONE = ['var(--q0)','var(--q1)','var(--q2)','var(--q3)'];
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  var VBX = 40, VBY = 30, VBW = 1820, VBH = 1420, OX = 950, OY = 785;
+  var CXV = VBX + VBW/2, CYV = VBY + VBH/2;
+  var all = [], bySlug = {}, clusters = [];
+  var state = {q:null, cluster:null, query:'', sel:null, showAll:false};
+  var lastSig = null;
+
+  CODEX.forEach(function(q,qi){
+    q.c.forEach(function(c,ci){
+      c.key = qi+'-'+ci; c.no = clusters.length + 1; c.qi = qi;
+      clusters.push(c);
+      c.b.forEach(function(b){
+        var rec = {b:b, c:c, q:q, qi:qi, ci:ci,
+          key:(b.n+' '+b.e+' '+b.t+' '+b.x+' '+c.es+' '+c.en+' '+q.es).toLowerCase()};
+        all.push(rec); bySlug[b.s] = rec;
+      });
+    });
+  });
+
+  function el(n,a){var e=document.createElementNS(SVGNS,n);
+    for(var k in a){e.setAttribute(k,a[k]);} return e;}
+  function norm(s){return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+
+  /* ================= radial codex ================= */
+  var svg = el('svg',{viewBox:VBX+' '+VBY+' '+VBW+' '+VBH,
+                      'aria-label':'Códice de sesgos cognitivos'});
+  var cam = el('g',{id:'cam'});
+  var root = el('g',{transform:'translate('+OX+','+OY+')'});
+  cam.appendChild(root); svg.appendChild(cam);
+  root.appendChild(el('circle',{class:'ring', r:630}));
+
+  var QPOS = [[770,-580],[770,580],[-770,580],[-770,-580]];
+  var qGroups = [], clGroups = {};
+
+  CODEX.forEach(function(q,qi){
+    var g = el('g',{class:'q'}); g.dataset.q = qi;
+    qGroups.push(g);
+    var tone = TONE[qi];
+
+    q.c.forEach(function(c){
+      var cg = el('g',{class:'cl'}); cg.dataset.c = c.key;
+      clGroups[c.key] = cg;
+
+      var limb = el('path',{class:'limb', d:c.d, stroke:tone});
+      limb.dataset.c = c.key;
+      cg.appendChild(limb);
+
+      c.b.forEach(function(b){
+        var bg = el('g',{class:'bias'});
+        bg.dataset.s = b.s; bg.dataset.c = c.key;
+        bg.appendChild(el('path',{d:b.d, stroke:tone}));
+        var node = el('g',{transform:'rotate('+b.a+') translate(428)'});
+        node.appendChild(el('circle',{cx:3, r:3, fill:tone}));
+        var flip = Math.cos(b.a*Math.PI/180) < 0;
+        var t = el('text',{x:12, y:4, fill:tone});
+        if(flip){ t.setAttribute('text-anchor','end');
+                  t.setAttribute('transform','rotate(180 12,0)'); }
+        t.textContent = b.n;
+        node.appendChild(t);
+        bg.appendChild(node);
+        var ti = el('title',{});
+        ti.textContent = 'Sesgo · ' + b.n + ' / ' + b.e + ' — ' + b.t;
+        bg.appendChild(ti);
+        cg.appendChild(bg);
+      });
+
+      /* marcador numerado de estrategia */
+      var right = c.cx >= 0, sign = right ? 1 : -1;
+      var cl = el('g',{class:'clabel'}); cl.dataset.c = c.key;
+      cl.appendChild(el('circle',{class:'pip', cx:c.cx, cy:c.cy, r:14}));
+      var pn = el('text',{class:'pipn', x:c.cx, y:c.cy+4, 'text-anchor':'middle'});
+      pn.textContent = c.no; cl.appendChild(pn);
+      var lt = el('text',{class:'nm',
+        transform:'translate('+(c.cx+sign*26)+','+c.cy+')',
+        'text-anchor': right?'start':'end'});
+      var lines = wrapText(c.es, 30);
+      var first = -((lines.length-1)*17)/2 - 4;
+      lines.forEach(function(l,i){
+        var ts = el('tspan',{x:0});
+        if(i===0) ts.setAttribute('y', first); else ts.setAttribute('dy', 17);
+        ts.textContent = l; lt.appendChild(ts);
+      });
+      cl.appendChild(lt);
+      var ct = el('text',{class:'ct',
+        transform:'translate('+(c.cx+sign*26)+','+(c.cy+first+(lines.length-1)*17+16)+')',
+        'text-anchor': right?'start':'end'});
+      ct.textContent = 'Estrategia ' + c.no + ' · ' + c.b.length + ' sesgos';
+      cl.appendChild(ct);
+      var cti = el('title',{});
+      cti.textContent = 'Estrategia ' + c.no + ' · ' + c.es;
+      cl.appendChild(cti);
+      cg.appendChild(cl);
+      g.appendChild(cg);
+    });
+
+    var qTotal = q.c.reduce(function(a,c){ return a + c.b.length; }, 0);
+    var qg = el('g',{class:'qlabel',
+      transform:'translate('+QPOS[qi][0]+','+QPOS[qi][1]+')'});
+    qg.dataset.q = qi;
+    var ql = wrapText(q.es, 16);
+    var qf = -((ql.length-1)*48)/2 + 16;
+    var lastY = qf + (ql.length-1)*48;
+    // área de impacto: el bloque entero se puede pulsar, no solo las letras
+    qg.appendChild(el('rect',{class:'hit', x:-230, y:qf-52,
+                              width:460, height:(lastY-qf)+122, rx:12}));
+    var qt = el('text',{class:'qt', fill:tone, 'text-anchor':'middle'});
+    ql.forEach(function(l,i){
+      var ts = el('tspan',{x:0});
+      if(i===0) ts.setAttribute('y', qf); else ts.setAttribute('dy', 48);
+      ts.textContent = l; qt.appendChild(ts);
+    });
+    qg.appendChild(qt);
+    qg.appendChild(el('line',{class:'rule', x1:-150, y1:lastY+16, x2:150, y2:lastY+16}));
+    var qc = el('text',{class:'qcap', 'text-anchor':'middle', y:lastY+44});
+    qc.textContent = qTotal + ' sesgos · ' + q.c.length + ' estrategias · clic para acercar';
+    qg.appendChild(qc);
+    var qti = el('title',{});
+    qti.textContent = 'Problema · ' + q.es + ' — clic para acercar el mapa';
+    qg.appendChild(qti);
+    g.insertBefore(qg, g.firstChild);   // debajo de radios y estrategias
+    root.appendChild(g);
+  });
+
+  function wrapText(s, max){
+    var words = s.split(' '), lines = [], cur = '';
+    words.forEach(function(w){
+      if((cur+' '+w).trim().length > max){ lines.push(cur.trim()); cur = w; }
+      else cur += ' ' + w;
+    });
+    if(cur.trim()) lines.push(cur.trim());
+    return lines;
+  }
+
+  var stage = document.getElementById('stage');
+  stage.insertBefore(svg, document.getElementById('center'));
+
+  /* ================= audio ================= */
+  var sndOn = true;
+  try { sndOn = localStorage.getItem('codex-snd') !== 'off'; } catch(e){}
+  var armed = false, introTimer = null, lastTick = 0;
+
+  function pool(src, vol, size){
+    var a = [], i;
+    for(i = 0; i < size; i++){
+      var x = new Audio(src); x.preload = 'none'; x.volume = vol; a.push(x);
+    }
+    var k = 0;
+    return {
+      load: function(){ a.forEach(function(x){ try { x.load(); } catch(e){} }); },
+      play: function(gated){
+        if(!sndOn || !armed) return;
+        // una sola voz corta por gesto: evita dobles al encadenar acciones
+        if(gated !== false){
+          var t = Date.now();
+          if(t - lastTick < 110) return;
+          lastTick = t;
+        }
+        var x = a[k++ % a.length];
+        try { x.currentTime = 0; var r = x.play(); if(r && r.catch) r.catch(function(){}); }
+        catch(e){}
+      }
+    };
+  }
+
+  // click1/click2: estrategias y problemas · key1/key2: recorrido entre sesgos
+  var sfxNext  = pool('audio/click1.mp3', 0.55, 3);
+  var sfxPrev  = pool('audio/click2.mp3', 0.55, 3);
+  var sfxKeyN  = pool('audio/key1.mp3', 0.6, 4);
+  var sfxKeyP  = pool('audio/key2.mp3', 0.6, 4);
+  var sfxEnter = pool('audio/init1.mp3', 0.6, 1);   // despliegue del códice
+  var sfxOut   = pool('audio/zoomout.mp3', 0.5, 2);
+  var spinAudio = new Audio('audio/random2.mp3'); // ruleta del sesgo al azar
+  spinAudio.preload = 'none'; spinAudio.volume = 0.55;
+  var spinFade = null;
+  function spinSoundStart(){
+    if(!sndOn || !armed) return;
+    if(spinFade){ clearInterval(spinFade); spinFade = null; }
+    try {
+      spinAudio.currentTime = 0; spinAudio.volume = 0.55;
+      var r = spinAudio.play(); if(r && r.catch) r.catch(function(){});
+    } catch(e){}
+  }
+  function spinSoundStop(){
+    // corte al aterrizar: la pista dura más que el giro y no debe pisar
+    // el sonido de selección. 90 ms de rampa solo para evitar el chasquido.
+    if(spinFade) clearInterval(spinFade);
+    var v = spinAudio.volume, t0 = Date.now();
+    spinFade = setInterval(function(){
+      var k = Math.min(1, (Date.now() - t0) / 90);
+      spinAudio.volume = Math.max(0, v * (1 - k));
+      if(k >= 1){
+        clearInterval(spinFade); spinFade = null;
+        try { spinAudio.pause(); spinAudio.currentTime = 0; } catch(e){}
+        spinAudio.volume = 0.55;
+      }
+    }, 15);
+  }
+
+  var intro = new Audio('audio/intro.mp3');
+  intro.loop = false; intro.preload = 'none'; intro.volume = 0;
+  var introUsed = false;
+
+  function introFade(to, ms){
+    if(introTimer) clearInterval(introTimer);
+    var from = intro.volume, t0 = Date.now();
+    introTimer = setInterval(function(){
+      var k = Math.min(1, (Date.now() - t0) / ms);
+      intro.volume = Math.max(0, Math.min(1, from + (to - from) * k));
+      if(k >= 1){
+        clearInterval(introTimer); introTimer = null;
+        if(to === 0){ try { intro.pause(); } catch(e){} }
+      }
+    }, 40);
+  }
+  function introPlay(){
+    if(!sndOn || !armed || introUsed) return;
+    introUsed = true;                 // una sola reproducción, nunca se repite
+    try {
+      intro.volume = 0;
+      var r = intro.play();
+      var settle = function(){ if(sndOn) introFade(0.5, 1200); };
+      if(r && r.then) r.then(settle, function(){}); else settle();
+    } catch(e){}
+  }
+  function introStop(){
+    introUsed = true;
+    introFade(0, 900);
+  }
+
+  function arm(){
+    if(armed) return;
+    armed = true;
+    sfxNext.load(); sfxPrev.load(); sfxKeyN.load(); sfxKeyP.load();
+    sfxEnter.load(); sfxOut.load();
+    try { intro.load(); } catch(e){}
+    try { spinAudio.load(); } catch(e){}
+    setTimeout(prepBloom, 0);
+  }
+  ['pointerdown','keydown','touchstart'].forEach(function(ev){
+    window.addEventListener(ev, arm, {passive:true});
+  });
+
+  var sndBtn = document.getElementById('sndBtn');
+  var sndIntro = document.getElementById('sndIntro');
+  function sndLabels(){
+    sndBtn.textContent = sndOn ? 'Sonido' : 'Silencio';
+    sndBtn.classList.toggle('off', !sndOn);
+    sndIntro.textContent = sndOn ? 'Silenciar' : 'Activar sonido';
+    sndIntro.classList.toggle('on', sndOn);
+  }
+  function setSound(on){
+    sndOn = on;
+    try { localStorage.setItem('codex-snd', on ? 'on' : 'off'); } catch(e){}
+    sndLabels();
+    if(!on) introFade(0, 400);
+    else arm();
+  }
+  sndBtn.addEventListener('click', function(){ setSound(!sndOn); });
+  sndIntro.addEventListener('click', function(){ setSound(!sndOn); });
+  sndLabels();
+
+  /* ================= camera ================= */
+  var cm = {k:1, tx:0, ty:0};
+  var zLvl = document.getElementById('zLvl');
+
+  function setCam(k, tx, ty, animate){
+    k = Math.max(1, Math.min(5, k));
+    if(animate){
+      var dx = (tx-cm.tx)/VBW, dy = (ty-cm.ty)/VBH;
+      var travel = Math.min(1, Math.sqrt(dx*dx+dy*dy) + Math.abs(Math.log(k/cm.k))/1.6);
+      cam.style.setProperty('--cam-ms', Math.round(520 + travel*520) + 'ms');
+    }
+    cm.k = k; cm.tx = tx; cm.ty = ty;
+    cam.classList.toggle('nt', !animate);
+    cam.style.transform = 'translate('+tx+'px,'+ty+'px) scale('+k+')';
+    zLvl.textContent = Math.round(k*100) + '%';
+    stage.classList.toggle('zoomed', k > 1.02);
+    svg.classList.toggle('pan', k > 1.02);
+  }
+  /* ---- despliegue radial, acompasado con sequence.mp3 (5.3 s) ---- */
+  var bloomReady = false, bloomT = null;
+  function prepBloom(){
+    if(bloomReady) return;
+    bloomReady = true;
+    svg.querySelectorAll('g.cl').forEach(function(cg, i){
+      var d = 150 + i * 55;
+      var limb = cg.querySelector('path.limb');
+      if(limb){
+        try { limb.style.setProperty('--len', limb.getTotalLength().toFixed(1)); } catch(e){}
+        limb.style.setProperty('--d', d + 'ms');
+      }
+      var lab = cg.querySelector('g.clabel');
+      if(lab) lab.style.setProperty('--d', (d + 520) + 'ms');
+    });
+    var k = 0;
+    svg.querySelectorAll('g.bias').forEach(function(bg){
+      var pth = bg.querySelector('path');
+      if(pth){
+        try { pth.style.setProperty('--len', pth.getTotalLength().toFixed(1)); } catch(e){}
+      }
+      bg.style.setProperty('--d', (700 + k * 22) + 'ms');   // barrido en abanico
+      k++;
+    });
+    svg.querySelectorAll('.qlabel').forEach(function(t, i){
+      t.style.setProperty('--d', (3900 + i * 190) + 'ms');
+    });
+  }
+  function bloom(){
+    prepBloom();
+    cam.classList.remove('bloom');
+    void cam.getBoundingClientRect();        // reinicia las animaciones
+    cam.classList.add('bloom');
+    clearTimeout(bloomT);
+    bloomT = setTimeout(function(){ cam.classList.remove('bloom'); }, 6200);
+  }
+
+  function fitTo(node, pad){
+    if(window.innerWidth <= 860 && !wrapEl.classList.contains('on')){
+      setCam(1,0,0,false); return; }
+    if(!node){ setCam(1,0,0,true); return; }
+    var bb;
+    try { bb = node.getBBox(); } catch(e){ setCam(1,0,0,true); return; }
+    if(!bb || !bb.width){ setCam(1,0,0,true); return; }
+    pad = pad || 60;
+    var k = Math.min(VBW/(bb.width+pad*2), VBH/(bb.height+pad*2));
+    k = Math.max(1, Math.min(4.2, k));
+    var cx = bb.x + bb.width/2 + OX, cy = bb.y + bb.height/2 + OY;
+    setCam(k, CXV - k*cx, CYV - k*cy, true);
+  }
+  function refit(){
+    fitTo(state.cluster ? clGroups[state.cluster]
+        : state.q !== null ? qGroups[state.q] : null,
+        state.cluster ? 50 : 70);
+  }
+  function zoomBy(f){
+    var k2 = Math.max(1, Math.min(5, cm.k*f));
+    var cx = (CXV - cm.tx)/cm.k, cy = (CYV - cm.ty)/cm.k;
+    setCam(k2, CXV - k2*cx, CYV - k2*cy, true);
+  }
+  document.getElementById('zIn').addEventListener('click', function(){
+    sfxNext.play(); zoomBy(1.5); syncNav(); });
+  document.getElementById('zOut').addEventListener('click', function(){
+    sfxOut.play(); zoomBy(1/1.5); syncNav(); });
+  function syncNav(){
+    if(!stBack) return;
+    stBack.textContent = levelLabel();
+    var idle = !filtered() && cm.k <= 1.02;
+    stBack.classList.toggle('muted', idle);
+    stAll.classList.toggle('muted', idle);
+  }
+
+  var drag = null, didDrag = false;
+  svg.addEventListener('pointerdown', function(e){
+    if(cm.k <= 1.02) return;
+    drag = {x:e.clientX, y:e.clientY, tx:cm.tx, ty:cm.ty};
+    didDrag = false; svg.classList.add('panning');
+  });
+  window.addEventListener('pointermove', function(e){
+    if(!drag) return;
+    var f = VBW / svg.clientWidth;
+    var dx = (e.clientX-drag.x)*f, dy = (e.clientY-drag.y)*f;
+    if(Math.abs(dx)+Math.abs(dy) > 6) didDrag = true;
+    setCam(cm.k, drag.tx+dx, drag.ty+dy, false);
+  });
+  window.addEventListener('pointerup', function(){
+    if(drag){ drag = null; svg.classList.remove('panning');
+      setTimeout(function(){ didDrag = false; }, 0); }
+  });
+
+  /* ================= pantalla completa ================= */
+  var wrapEl = document.getElementById('codexWrap');
+  var fsBtn = document.getElementById('fsBtn');
+  var nativeFS = false, returnToCodex = false;
+  function setWide(on, quiet){
+    var was = wrapEl.classList.contains('on');
+    if(on && !was){
+      introFade(0, 1800);
+      // quiet: la entrada es un medio para otra acción (ruleta, búsqueda),
+      // así que no le robamos el momento con la secuencia de despliegue
+      if(!quiet){ sfxEnter.play(false); bloom(); }
+    }
+    if(!on && was){ sfxOut.play(false); }
+    wrapEl.classList.toggle('on', on);
+    document.body.classList.toggle('locked', on);
+    fsBtn.textContent = on ? 'Salir' : 'Pantalla completa';
+    if(!on && returnToCodex){
+      returnToCodex = false;
+      var t = document.getElementById('ch1');
+      if(t) window.scrollTo(0, Math.max(0, t.offsetTop - 24));
+    }
+    if(on && wrapEl.requestFullscreen){
+      // en un iframe esto suele rechazarse; el overlay CSS cubre igual la pantalla
+      var r = wrapEl.requestFullscreen();
+      if(r && r.then) r.then(function(){ nativeFS = true; }, function(){ nativeFS = false; });
+    }
+    if(!on && nativeFS && document.fullscreenElement && document.exitFullscreen){
+      nativeFS = false;
+      document.exitFullscreen().catch(function(){});
+    }
+    setTimeout(refit, 60);
+  }
+  fsBtn.addEventListener('click', function(){ setWide(!wrapEl.classList.contains('on')); });
+  document.addEventListener('fullscreenchange', function(){
+    // solo cerrar si de verdad habíamos entrado en fullscreen nativo
+    if(nativeFS && !document.fullscreenElement){ nativeFS = false; setWide(false); }
+  });
+
+  /* ================= chapters ================= */
+  var chaps = document.getElementById('chapters');
+  CODEX.forEach(function(q,qi){
+    var n = q.c.reduce(function(a,c){return a+c.b.length;},0);
+    var sec = document.createElement('section');
+    sec.className = 'chapter'; sec.id = 'ch'+(qi+2);
+    var h = '<div class="chead"><div class="badge">'+(qi+2)+'</div>'+
+            '<div><div class="kicker">Problema</div><h2>'+q.es+'</h2></div></div>'+
+            '<p class="csub">'+n+' sesgos · '+q.c.length+' estrategias · <span style="color:var(--color-ash)">'+q.en+'</span></p>';
+    q.c.forEach(function(c){
+      h += '<div class="cluster-block" data-c="'+c.key+'">'+
+           '<div class="cluster-head"><div class="badge sm">'+c.no+'</div>'+
+           '<div><div class="kicker">Estrategia '+c.no+' de 20</div><h3>'+c.es+'</h3></div>'+
+           '<div class="n">'+c.b.length+' sesgos</div></div><div>';
+      c.b.forEach(function(b){
+        h += '<button class="row" data-s="'+b.s+'"><div class="rn">'+b.n+
+             '<span class="re">'+b.e+'</span></div><div class="rd">'+b.t+'</div></button>';
+      });
+      h += '</div></div>';
+    });
+    sec.innerHTML = h;
+    chaps.appendChild(sec);
+  });
+
+  /* ================= chips ================= */
+  var chips = document.getElementById('chips');
+  CODEX.forEach(function(q,qi){
+    var b = document.createElement('button');
+    b.className = 'btn'; b.dataset.q = qi;
+    b.innerHTML = '<span class="dot" style="background:'+TONE[qi]+'"></span>'+q.es;
+    b.title = 'Problema · ' + q.es;
+    chips.appendChild(b);
+  });
+  // la fila de estrategias ya no vive en el menú: se navega por los números
+  // del anillo, por las flechas ↑ ↓ y por el listado desplegable
+  function renderStrats(){}
+
+  /* ================= filtering ================= */
+  var nodes = svg.querySelectorAll('g.bias');
+  var limbs = svg.querySelectorAll('path.limb');
+  var clabels = svg.querySelectorAll('g.clabel');
+  var clGroupEls = svg.querySelectorAll('g.cl');
+  var qlabels = svg.querySelectorAll('.qlabel');
+  var rows = document.querySelectorAll('.row');
+  var centerEl = document.getElementById('center');
+  var listHint = document.getElementById('listHint');
+  var stEye = document.getElementById('stEye'), stMain = document.getElementById('stMain'),
+      stTally = document.getElementById('stTally'), stBadge = document.getElementById('stBadge'),
+      stBack = document.getElementById('stBack'), stAll = document.getElementById('stAll'),
+      statusEl = document.querySelector('.status');
+
+  function clusterOf(key){ var p = key.split('-'); return CODEX[+p[0]].c[+p[1]]; }
+
+  function levelLabel(){
+    if(state.query) return 'Quitar la búsqueda';
+    if(state.cluster) return 'Volver al problema';
+    if(state.q !== null) return 'Volver a todo';
+    return cm.k > 1.02 ? 'Alejar al 100%' : 'Volver';
+  }
+  function levelUp(){
+    sfxOut.play();
+    if(state.query){
+      document.getElementById('q').value = ''; state.query = '';
+      apply(); refit(); return;
+    }
+    if(state.cluster){ pickCluster(null); return; }
+    if(state.q !== null){ pickQuadrant(null); return; }
+    setCam(1,0,0,true); status(188,20);
+  }
+  function resetAll(){
+    document.getElementById('q').value = ''; state.query = '';
+    pickQuadrant(null);
+  }
+  function filtered(){ return state.q !== null || !!state.cluster || !!state.query; }
+
+  function matches(rec){
+    if(state.q !== null && rec.qi !== state.q) return false;
+    if(state.cluster && rec.c.key !== state.cluster) return false;
+    if(state.query){
+      var k = norm(rec.key);
+      return state.query.split(/\s+/).every(function(w){return k.indexOf(w) >= 0;});
+    }
+    return true;
+  }
+
+  function apply(){
+    var live = {}, n = 0, liveC = {};
+    all.forEach(function(rec){
+      if(matches(rec)){ live[rec.b.s] = 1; n++; liveC[rec.c.key] = 1; }
+    });
+    nodes.forEach(function(g){ g.classList.toggle('off', !live[g.dataset.s]); });
+    limbs.forEach(function(p){ p.style.opacity = liveC[p.dataset.c] ? '' : '.1'; });
+    clabels.forEach(function(g){
+      g.classList.toggle('off', !liveC[g.dataset.c]);
+      g.classList.toggle('pick', g.dataset.c === state.cluster);
+    });
+    clGroupEls.forEach(function(g){
+      g.classList.toggle('focus', !!state.cluster && g.dataset.c === state.cluster);
+    });
+    qlabels.forEach(function(t){
+      var mine = +t.dataset.q === state.q;
+      t.classList.toggle('off', state.q !== null && !mine);
+      t.classList.toggle('focus', mine && !state.cluster);
+    });
+    var vi = 0;
+    rows.forEach(function(r){
+      var on = !!live[r.dataset.s];
+      r.style.display = on ? '' : 'none';
+      if(on) r.style.setProperty('--i', Math.min(vi++, 30));
+    });
+    document.querySelectorAll('.cluster-block').forEach(function(b){
+      var any = Array.prototype.some.call(b.querySelectorAll('.row'),
+                function(r){return r.style.display !== 'none';});
+      b.style.display = any ? '' : 'none';
+    });
+    document.querySelectorAll('.chapter').forEach(function(s){
+      if(s.id === 'ch1') return;
+      var any = Array.prototype.some.call(s.querySelectorAll('.cluster-block'),
+                function(b){return b.style.display !== 'none';});
+      s.style.display = any ? '' : 'none';
+    });
+
+    var show = state.showAll;
+    chaps.style.display = show ? '' : 'none';
+    var sig = state.q+'|'+state.cluster+'|'+state.showAll+'|'+(state.query?1:0);
+    if(show && sig !== lastSig){
+      chaps.classList.remove('animate');
+      void chaps.offsetWidth;
+      chaps.classList.add('animate');
+    }
+    lastSig = sig;
+    document.getElementById('showAll').textContent =
+      state.showAll ? 'Ocultar el listado' : 'Desplegar el listado';
+    listHint.firstElementChild.textContent = state.showAll
+      ? 'Mostrando las 188 definiciones, filtradas por lo que tengas seleccionado.'
+      : 'El listado completo con las 188 definiciones está plegado.';
+
+    status(n, Object.keys(liveC).length);
+    if(!state.sel) setCenter(null);
+  }
+
+  function status(n, nc){
+    var eye = 'Vista completa', main = 'Todo el códice', badge = null, acc = false;
+    if(state.cluster){
+      var c = clusterOf(state.cluster);
+      eye = 'Estrategia ' + c.no + ' de 20 · ' + CODEX[c.qi].es;
+      main = c.es; badge = c.no; acc = true;
+    } else if(state.q !== null){
+      eye = 'Problema ' + (state.q+1) + ' de 4';
+      main = CODEX[state.q].es; badge = state.q + 2;
+    }
+    if(state.query){
+      eye = main === 'Todo el códice' ? 'Búsqueda en el códice' : eye + ' · búsqueda';
+      main = '«' + document.getElementById('q').value.trim() + '»';
+      badge = null; acc = false;
+    }
+    var changed = stMain.textContent !== main;
+    stEye.textContent = eye; stMain.textContent = main;
+    if(badge === null){ stBadge.style.display = 'none'; }
+    else {
+      stBadge.style.display = ''; stBadge.textContent = badge;
+      stBadge.classList.toggle('focus', acc);
+      if(changed){ stBadge.classList.remove('pop'); void stBadge.offsetWidth;
+                   stBadge.classList.add('pop'); }
+    }
+    stTally.textContent = n === 0 ? 'ningún sesgo'
+      : n + (n === 1 ? ' sesgo' : ' sesgos') + ' · ' + nc + (nc === 1 ? ' estrategia' : ' estrategias');
+    stBack.textContent = levelLabel();
+    stBack.classList.toggle('muted', !filtered() && cm.k <= 1.02);
+    stAll.classList.toggle('muted', !filtered() && cm.k <= 1.02);
+  }
+
+  function setCenter(rec){
+    if(!rec){
+      var head = state.cluster ? clusterOf(state.cluster).es
+               : state.q !== null ? CODEX[state.q].es : '188 sesgos';
+      var sub = state.cluster ? 'Estrategia ' + clusterOf(state.cluster).no + ' de 20'
+              : state.q !== null ? CODEX[state.q].c.length + ' estrategias'
+              : '20 estrategias · 4 problemas';
+      centerEl.innerHTML = '<div class="k'+(head.length>18?' sm':'')+'">'+head+'</div><div class="v">'+sub+'</div>';
+    } else {
+      centerEl.innerHTML = '<div class="k sm">'+rec.b.n+'</div><div class="v">'+rec.b.e+'</div>';
+    }
+  }
+
+  /* ================= selection ================= */
+  function pickQuadrant(qi){
+    (qi === null ? sfxOut : sfxNext).play();
+    state.q = qi; state.cluster = null;
+    syncChips(); renderStrats(); apply(); refit();
+  }
+  function pickCluster(key){
+    (key === null ? sfxOut : sfxNext).play();
+    state.cluster = key;
+    if(key) state.q = clusterOf(key).qi;
+    syncChips(); renderStrats(); apply(); refit();
+  }
+  function syncChips(){
+    document.querySelectorAll('.btn[data-q]').forEach(function(b){
+      b.classList.toggle('on', b.dataset.q !== 'all' && +b.dataset.q === state.q);
+    });
+  }
+
+  /* ================= hover ================= */
+  function hot(slug){
+    svg.classList.toggle('hot', !!slug);
+    nodes.forEach(function(g){ g.classList.toggle('is-hot', g.dataset.s === slug); });
+    var c = slug ? bySlug[slug].c.key : null;
+    limbs.forEach(function(p){ p.classList.toggle('is-hot', p.dataset.c === c); });
+    clabels.forEach(function(g){ g.classList.toggle('is-hot', g.dataset.c === c); });
+    setCenter(slug ? bySlug[slug] : (state.sel ? bySlug[state.sel] : null));
+  }
+
+  nodes.forEach(function(g){
+    g.addEventListener('mouseenter', function(){ hot(g.dataset.s); });
+    g.addEventListener('mouseleave', function(){ hot(state.sel); });
+    g.addEventListener('click', function(){ if(!didDrag) open(g.dataset.s); });
+  });
+  clabels.forEach(function(g){
+    g.addEventListener('click', function(){
+      if(didDrag) return;
+      pickCluster(state.cluster === g.dataset.c ? null : g.dataset.c);
+    });
+  });
+  qlabels.forEach(function(t){
+    t.addEventListener('click', function(){
+      if(didDrag) return;
+      var qi = +t.dataset.q;
+      pickQuadrant(state.q === qi && !state.cluster ? null : qi);
+    });
+  });
+  rows.forEach(function(r){
+    r.addEventListener('click', function(){ open(r.dataset.s); });
+    r.addEventListener('mouseenter', function(){ if(!state.sel) hot(r.dataset.s); });
+    r.addEventListener('mouseleave', function(){ if(!state.sel) hot(null); });
+  });
+  document.querySelectorAll('.cluster-head').forEach(function(h){
+    h.addEventListener('click', function(){
+      pickCluster(h.closest('.cluster-block').dataset.c);
+      document.getElementById('codex').scrollIntoView({behavior:'smooth', block:'center'});
+    });
+  });
+
+  /* ================= panel ================= */
+  var panel = document.getElementById('panel');
+  var body  = document.getElementById('panelBody');
+  var scrim = document.getElementById('scrim');
+
+  function open(slug){
+    var rec = bySlug[slug]; if(!rec) return;
+    sfxKeyN.play();
+    state.sel = slug;
+    body.innerHTML =
+      '<div class="eyebrow">Sesgo</div>'+
+      '<h3>'+rec.b.n+'</h3>'+
+      '<div class="estitle">'+rec.b.e+'</div>'+
+      '<p class="def">'+rec.b.t+'</p>'+
+      '<div class="ex"><div class="kicker">Ejemplo</div>'+rec.b.x+'</div>'+
+      '<div class="more"><span class="kicker">Más información</span>'+
+        '<div class="row2">'+
+          '<button class="shb" data-act="copy">Prompt para más detalles</button>'+
+          '<a class="shb" href="'+rec.b.u+'" target="_blank" rel="noopener">En Wikipedia</a>'+
+        '</div>'+
+        '<div class="note" id="copyNote" hidden>Texto copiado al portapapeles</div>'+
+      '</div>'+
+      '<div class="share"><span class="kicker">Compartir</span>'+
+        '<div class="row2">'+
+          '<button class="shb" data-act="wa">WhatsApp</button>'+
+          '<button class="shb" data-act="li">LinkedIn</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="where">'+
+        '<div class="kicker">Problema</div>'+
+        '<div class="pb">'+rec.q.es+'</div>'+
+        '<div class="strat"><div class="badge sm">'+rec.c.no+'</div>'+
+          '<div><div class="kicker">Estrategia '+rec.c.no+' de 20</div>'+
+          rec.c.es+'<br><span>'+rec.c.en+'</span></div>'+
+        '</div>'+
+      '</div>';
+    panel.classList.add('open'); scrim.classList.add('on');
+    document.body.classList.add('panelopen');
+    wrapEl.classList.add('panelopen');
+    rows.forEach(function(r){ r.classList.toggle('sel', r.dataset.s === slug); });
+    hot(slug); setTimeout(refit, 40);
+    history.replaceState(null,'','#'+slug);
+  }
+  function promptFor(rec){
+    return 'Quiero entender a fondo el sesgo cognitivo «' + rec.b.n + '» (' + rec.b.e + ').\n\n' +
+      'Definición breve: ' + rec.b.t + '\n' +
+      'Ejemplo: ' + rec.b.x + '\n' +
+      'En el Cognitive Bias Codex pertenece a la estrategia ' + rec.c.no + ', «' + rec.c.es +
+      '», dentro del problema «' + rec.q.es + '».\n\n' +
+      'Dame:\n' +
+      '1. Tres ejemplos concretos y distintos entre sí: uno en el trabajo, uno en decisiones de dinero y uno en relaciones personales.\n' +
+      '2. Una señal temprana para detectarlo en mí mismo, escrita en primera persona.\n' +
+      '3. Una contramedida práctica que pueda aplicar en menos de un minuto.\n' +
+      '4. Un sesgo con el que suela confundirse y en qué se diferencian exactamente.\n\n' +
+      'Responde en español, concreto y sin rodeos, y no repitas la definición que te di.';
+  }
+  function shareText(rec){
+    // el enlace lleva al códice desde la intro, no a un ancla del sesgo
+    var url = location.origin + location.pathname;
+    return '«' + rec.b.n + '» · ' + rec.b.e + '\n\n' +
+      rec.b.t + '\n\n' +
+      'Ejemplo: ' + rec.b.x + '\n\n' +
+      'Uno de los 188 sesgos de The Bias Codex Artefact: ' + url;
+  }
+  function shareTo(net, rec){
+    var t = encodeURIComponent(shareText(rec));
+    var u = net === 'wa'
+      ? 'https://wa.me/?text=' + t
+      : 'https://www.linkedin.com/feed/?shareActive=true&text=' + t;
+    window.open(u, '_blank', 'noopener');
+  }
+
+  var noteT = null;
+  function copyPrompt(btn, text){
+    function done(){
+      var n = document.getElementById('copyNote');
+      if(!n) return;
+      clearTimeout(noteT);
+      n.hidden = false;
+      void n.offsetWidth;                 // reinicia la transición
+      n.classList.add('on');
+      noteT = setTimeout(function(){
+        n.classList.remove('on');
+        setTimeout(function(){ n.hidden = true; }, 340);
+      }, 2400);
+    }
+    function legacy(){
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly','');
+      ta.style.position = 'fixed'; ta.style.top = '-1000px'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch(e){}
+      document.body.removeChild(ta);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done, legacy);
+    } else legacy();
+  }
+
+  function close(){
+    stopSpin();
+    state.sel = null; panel.classList.remove('open'); scrim.classList.remove('on');
+    document.body.classList.remove('panelopen');
+    wrapEl.classList.remove('panelopen');
+    rows.forEach(function(r){ r.classList.remove('sel'); });
+    hot(null); setTimeout(refit, 40);
+    history.replaceState(null,'',location.pathname+location.search);
+  }
+  document.getElementById('closeBtn').addEventListener('click', close);
+  scrim.addEventListener('click', close);
+  /* ================= teclado ================= */
+  /* La navegación NO se limita al problema o estrategia elegido: recorre el
+     códice entero y, al cruzar un límite, el foco y el zoom acompañan.
+     Solo la búsqueda acota, porque ahí el conjunto es el resultado. */
+  function navPool(){
+    if(!state.query) return all;
+    var ws = state.query.split(/\s+/);
+    var out = all.filter(function(rec){
+      var k = norm(rec.key);
+      return ws.every(function(w){ return k.indexOf(w) >= 0; });
+    });
+    return out.length ? out : all;
+  }
+
+  function stepBias(dir){
+    var pool = navPool(); if(!pool.length) return;
+    var idx = -1;
+    if(state.sel){
+      for(var i=0;i<pool.length;i++){ if(pool[i].b.s === state.sel){ idx = i; break; } }
+    }
+    var nx = idx < 0 ? (dir > 0 ? 0 : pool.length-1)
+                     : (idx + dir + pool.length) % pool.length;
+    var rec = pool[nx];
+    (dir > 0 ? sfxKeyN : sfxKeyP).play();
+    // cruzar el límite: mover el foco en lugar de detenerse en él
+    if(state.cluster && state.cluster !== rec.c.key) pickCluster(rec.c.key);
+    else if(!state.cluster && state.q !== null && state.q !== rec.qi) pickQuadrant(rec.qi);
+    open(rec.b.s);
+    if(cm.k > 1.02 && !state.cluster && state.q === null)
+      fitTo(clGroups[rec.c.key], 50);
+  }
+
+  function stepCluster(dir){
+    var list = clusters;            // las 20, cruzando de un problema al siguiente
+    var idx = -1;
+    if(state.cluster){
+      for(var i=0;i<list.length;i++){ if(list[i].key === state.cluster){ idx = i; break; } }
+    } else if(state.q !== null){
+      var cs = CODEX[state.q].c;
+      idx = dir > 0 ? cs[0].no - 2 : cs[cs.length-1].no;
+    } else {
+      idx = dir > 0 ? -1 : list.length;
+    }
+    var c = list[(idx + dir + list.length) % list.length];
+    (dir > 0 ? sfxNext : sfxPrev).play();
+    pickCluster(c.key);
+    if(panel.classList.contains('open') && c.b.length) open(c.b[0].s);
+  }
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){
+      if(panel.classList.contains('open')) close();
+      else if(wrapEl.classList.contains('on')) setWide(false);
+      return;
+    }
+    var t = e.target;
+    if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    if(e.metaKey || e.ctrlKey || e.altKey) return;
+    switch(e.key){
+      case 'ArrowRight': e.preventDefault(); stepBias(1); break;
+      case 'ArrowLeft':  e.preventDefault(); stepBias(-1); break;
+      case 'ArrowDown':  e.preventDefault(); stepCluster(1); break;
+      case 'ArrowUp':    e.preventDefault(); stepCluster(-1); break;
+      case 'Enter':
+        if(!wrapEl.classList.contains('on')){ e.preventDefault(); setWide(true); }
+        break;
+      case 's': case 'S': case 'm': case 'M':
+        e.preventDefault(); setSound(!sndOn); break;
+      case 'f': case 'F':
+        e.preventDefault(); setWide(!wrapEl.classList.contains('on')); break;
+      case 'Backspace':
+        e.preventDefault(); levelUp(); break;
+    }
+  });
+  body.addEventListener('click', function(e){
+    var b = e.target.closest('[data-act]'); if(!b) return;
+    var rec = bySlug[state.sel]; if(!rec) return;
+    if(b.dataset.act === 'copy'){ copyPrompt(b, promptFor(rec)); return; }
+    if(b.dataset.act === 'wa' || b.dataset.act === 'li'){ shareTo(b.dataset.act, rec); return; }
+  });
+
+  /* ================= controls ================= */
+  var qInput = document.getElementById('q');
+  qInput.addEventListener('input', function(){
+    state.query = norm(qInput.value.trim()); apply();
+    if(state.query && !wrapEl.classList.contains('on')){
+      setWide(true, true);
+      setTimeout(function(){ qInput.focus(); }, 80);
+    }
+  });
+  document.querySelectorAll('.btn[data-q]').forEach(function(b){
+    b.addEventListener('click', function(){
+      if(b.dataset.q === 'all'){ qInput.value=''; state.query=''; pickQuadrant(null); }
+      else { var qi = +b.dataset.q; pickQuadrant(state.q === qi && !state.cluster ? null : qi); }
+    });
+  });
+  stBack.addEventListener('click', levelUp);
+  stAll.addEventListener('click', resetAll);
+  document.getElementById('showAll').addEventListener('click', function(){
+    state.showAll = !state.showAll; apply();
+    if(state.showAll){
+      if(wrapEl.classList.contains('on')) setWide(false);
+      setTimeout(function(){
+        chaps.scrollIntoView({behavior:'smooth', block:'start'});
+      }, 80);
+    }
+  });
+  /* ---- ruleta: recorre sesgos acelerado y frena sobre el elegido ---- */
+  var SPIN_MS = 2400, spinTimers = [], spinning = false;
+  var randBtn = document.getElementById('rand');
+
+  function stopSpin(){
+    spinTimers.forEach(clearTimeout); spinTimers = [];
+    if(spinning){ spinning = false; randBtn.classList.remove('spin'); spinSoundStop(); }
+  }
+
+  randBtn.addEventListener('click', function(){
+    if(spinning) return;
+    var pool = all.filter(matches); if(!pool.length) pool = all;
+    var target = pool[Math.floor(Math.random() * pool.length)];
+    if(!wrapEl.classList.contains('on')) setWide(true, true);
+    if(pool.length < 3){ open(target.b.s); return; }
+
+    spinning = true;
+    randBtn.classList.add('spin');
+    spinSoundStart();
+
+    // pesos crecientes: los saltos se van separando hasta detenerse
+    var n = Math.min(26, Math.max(12, pool.length));
+    var w = [], sum = 0, i;
+    for(i = 0; i < n; i++){
+      var v = 0.22 + Math.pow((i + 1) / n, 3);
+      w.push(v); sum += v;
+    }
+    var t = 0;
+    for(i = 0; i < n; i++){
+      t += SPIN_MS * w[i] / sum;
+      (function(idx, when){
+        spinTimers.push(setTimeout(function(){
+          if(idx === n - 1){
+            spinning = false;
+            randBtn.classList.remove('spin');
+            spinTimers = [];
+            spinSoundStop();
+            setTimeout(function(){ open(target.b.s); }, 90);
+            apply();                     // devuelve la barra de estado a su sitio
+          } else {
+            var r = pool[Math.floor(Math.random() * pool.length)];
+            hot(r.b.s);
+            stMain.textContent = r.b.n;
+          }
+        }, when));
+      })(i, t);
+    }
+  });
+  document.getElementById('menuBtn').addEventListener('click', function(){
+    document.getElementById('menu').classList.toggle('open');
+  });
+  document.querySelectorAll('.menu-in a').forEach(function(a){
+    a.addEventListener('click', function(){ document.getElementById('menu').classList.remove('open'); });
+  });
+  window.addEventListener('resize', function(){ clearTimeout(window._rt);
+    window._rt = setTimeout(refit, 200); });
+
+  /* ================= prólogo: secuencia temporizada ================= */
+  var INTRO_MS = 18000, GUIDE_MS = 8000;
+  var pro       = document.getElementById('prologue');
+  var proLines  = Array.prototype.slice.call(document.querySelectorAll('.pl'));
+  var proFill   = document.getElementById('proFill');
+  var guideFill = document.getElementById('guideFill');
+  var proNum    = document.getElementById('proNum');
+  var ch1       = document.getElementById('ch1');
+  var introOver = false;
+  var seen = false;
+  try { seen = localStorage.getItem('codex-intro') === 'seen'; } catch(e){}
+
+  var timers = [];
+  function later(fn, ms){ timers.push(setTimeout(fn, ms)); }
+  function clearTimers(){ timers.forEach(clearTimeout); timers = []; }
+
+  function resetLines(){
+    proLines.forEach(function(e){ e.classList.remove('in','out'); });
+  }
+  function bar(el, ms){            // la barra la anima el navegador, no un bucle
+    el.style.transition = 'none';
+    el.style.width = '0%';
+    void el.offsetWidth;           // reflow para fijar el punto de partida
+    el.style.transition = 'width ' + ms + 'ms linear';
+    el.style.width = '100%';
+  }
+
+  function startIntro(){
+    if(introOver || timers.length) return;
+    pro.classList.remove('state-start');
+    pro.classList.add('state-play');
+    arm();          // este clic es el gesto que habilita el audio
+    sfxNext.play(false);
+    introPlay();    // intro.mp3, una sola vez
+
+    var N = proLines.length, T = INTRO_MS / N, HOLD = T - 1000;
+    resetLines();
+    bar(proFill, INTRO_MS);
+    proLines.forEach(function(e, i){
+      later(function(){
+        e.classList.add('in');
+        proNum.textContent = ('0' + (i + 1)).slice(-2);
+      }, i * T);
+      later(function(){
+        e.classList.remove('in'); e.classList.add('out');
+      }, i * T + HOLD);
+    });
+    later(toGuide, INTRO_MS);
+  }
+
+  function toGuide(){
+    pro.classList.remove('state-play');
+    pro.classList.add('state-guide');
+    bar(guideFill, GUIDE_MS);
+    later(function(){ finishIntro(true); }, GUIDE_MS);
+  }
+
+  function finishIntro(enter){
+    if(introOver) return;
+    introOver = true;
+    clearTimers();
+    try { localStorage.setItem('codex-intro', 'seen'); } catch(e){}
+    introStop();                     // la música no vuelve a sonar
+    pro.classList.add('done');
+    document.body.classList.remove('intro');
+    if(ch1) ch1.classList.add('revealed');
+    if(enter) enterCodexFull(); else setTimeout(refit, 60);
+  }
+
+  function enterCodexFull(){
+    returnToCodex = true;
+    setWide(true);
+  }
+
+  document.getElementById('startIntro').addEventListener('click', startIntro);
+  document.getElementById('skipIntro').addEventListener('click', function(){ finishIntro(true); });
+  document.getElementById('enterCodex').addEventListener('click', function(){ finishIntro(true); });
+
+  if(seen){
+    // ya la vio: sin prólogo y directo a pantalla completa
+    introOver = true;
+    pro.classList.add('done');
+    document.body.classList.remove('intro');
+    if(ch1) ch1.classList.add('revealed');
+    if(!location.hash) setTimeout(enterCodexFull, 60);
+  } else {
+    document.body.classList.add('intro');
+  }
+
+  /* reinicia la experiencia completa y vuelve a la portada */
+  function restartExperience(){
+    stopSpin();
+    try { localStorage.removeItem('codex-intro'); } catch(e){}
+    returnToCodex = false;
+    if(wrapEl.classList.contains('on')) setWide(false);
+    close();                                   // cierra el panel de detalle
+    var qi = document.getElementById('q');
+    if(qi) qi.value = '';
+    state.query = ''; state.showAll = false;
+    state.q = null; state.cluster = null; state.sel = null;
+    syncChips(); renderStrats(); apply();
+    setCam(1, 0, 0, false);
+    // rearmar el prólogo desde cero
+    introOver = false; introUsed = false;
+    clearTimers();
+    try { intro.pause(); intro.currentTime = 0; } catch(e){}
+    intro.volume = 0;
+    proFill.style.transition = 'none'; proFill.style.width = '0%';
+    guideFill.style.transition = 'none'; guideFill.style.width = '0%';
+    proNum.textContent = '01';
+    resetLines();
+    pro.classList.remove('done', 'state-play', 'state-guide');
+    pro.classList.add('state-start');
+    document.body.classList.add('intro');
+    if(ch1) ch1.classList.remove('revealed');
+    window.scrollTo(0, 0);
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+  document.getElementById('homeBtn').addEventListener('click', restartExperience);
+  var replay = document.getElementById('replayIntro');
+  if(replay) replay.addEventListener('click', function(e){
+    e.preventDefault(); restartExperience();
+  });
+
+
+  setCam(1,0,0,false);
+  renderStrats();
+  apply();
+  var h = location.hash.slice(1), m;
+  if(h && h !== 'prologue' && !introOver) finishIntro(false);
+  if(h && bySlug[h]) open(h);
+  else if((m = /^e(\d+)$/.exec(h)) && clusters[+m[1]-1]) pickCluster(clusters[+m[1]-1].key);
+  else if((m = /^p([0-3])$/.exec(h))) pickQuadrant(+m[1]);
+})();
+</script>
+</body>
+</html>
